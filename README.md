@@ -1,2 +1,2 @@
 # ASMR
-Autonomous Service Miaou Restaurant
+Automatic Service Miaou Restaurant
