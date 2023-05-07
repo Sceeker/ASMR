@@ -7,10 +7,20 @@ public class INS extends GridTurtlebot {
         //TODO Auto-generated constructor stub
     }
 
+    public void radioReception(RadioData dat) {
+        int cmdId = dat.getCommandId();
+
+        switch (cmdId) {
+            default :
+                break;
+        }
+    }
+
     @Override
     public void move(int arg0) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'move'");
     }
-    
+
+
 }

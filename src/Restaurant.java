@@ -5,6 +5,8 @@ import fr.emse.fayol.maqit.simulator.configuration.SimProperties;
 import fr.emse.fayol.maqit.simulator.environment.GridManagement;
 
 public class Restaurant extends SimFactory {
+    private List<String> file;
+
     private int[] typeColor(int x) {
         int[] col;
 
@@ -37,50 +39,63 @@ public class Restaurant extends SimFactory {
                 col = new int[] {12, 134, 222};
                 break;
 
-            default:
+            default:    // Error cell
                 col = new int[] {255, 0, 0};
                 break;
         }
 
         return col;
     }
+
     public Restaurant(SimProperties sp, GridManagement env, List<String> file) {
         super(sp, env);     
-    
-        for (int y = 0; y < env.getColumns(); y++) {
-            char[] cur = file.get(y).toCharArray();
 
-            for (int x = 0; x < env.getRows(); x++) {
+        this.file = file;
+
+        createObstacle();
+        createTurtlebot();
+    }
+
+    @Override
+    public void createObstacle() {
+        for (int y = 0; y < this.environment.getColumns(); y++) {
+            char[] cur = this.file.get(y).toCharArray();
+
+            for (int x = 0; x < this.environment.getRows(); x++) {
                 char ch = cur[x];
                 int val = ch - 48;
 
-                env.addComponent(new int[] {x, y}, val, typeColor(val));
+                if (val != 6) {
+                    this.environment.addComponent(new int[] {x, y}, val, typeColor(val));
+                }
             }
         }
     }
 
     @Override
-    public void createObstacle() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createObstacle'");
-    }
-
-    @Override
     public void createObstacle(int[] arg0) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createObstacle'");
+        createObstacle();
     }
 
     @Override
     public void createTurtlebot() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createTurtlebot'");
+        for (int y = 0; y < this.environment.getColumns(); y++) {
+            char[] cur = this.file.get(y).toCharArray();
+
+            for (int x = 0; x < this.environment.getRows(); x++) {
+                char ch = cur[x];
+                int val = ch - 48;
+
+                if (val == 6) {
+                    this.environment.addComponent(new int[] {x, y}, val, typeColor(val));
+                }
+            }
+        }
     }
 
     @Override
     public void createTurtlebot(int[] arg0) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'createTurtlebot'");
+        createTurtlebot();
     }
 
     @Override
