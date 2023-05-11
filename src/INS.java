@@ -1,5 +1,7 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
@@ -7,11 +9,14 @@ import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 
 public class INS extends GridTurtlebot {
     private OpenGridManagement restaurantLayout;
+    private boolean orderOnHold;
+    private GridPath curPath;
 
     public INS(int id, String name, int field, int debug, int[] pos, int r, int c, OpenGridManagement env) {
         super(id, name, field, debug, pos, r, c);
 
         restaurantLayout = env;
+        orderOnHold = false;
     }
 
     private CellNode chooseCell(ArrayList<CellNode> cells) {
@@ -114,10 +119,48 @@ public class INS extends GridTurtlebot {
         return res;
     }
 
+    private void manageOrder() {
+        if (orderOnHold) {
+
+        }
+    }
+
+    private void registerOrder() {
+        orderOnHold = true;
+
+        TimerTask task = new TimerTask() {
+            public void run() {
+                manageOrder();
+            }
+        };
+
+        Timer timer = new Timer();
+        
+        timer.schedule(task, 1000);
+    }
+
+    private void cancelOrder() {
+        if (orderOnHold)
+            orderOnHold = false;
+    }
+
     public void radioReception(RadioData dat) {
         int cmdId = dat.getCommandId();
 
         switch (cmdId) {
+            case 0:     // Une table veut commander
+                registerOrder();
+
+                curPath = findPath(dat.getCommandData().get(0), dat.getCommandData().get(1));
+                Main.air.radioTransmission(new RadioData(this, 1, new ArrayList<Integer>(curPath.getDistance())));
+                break;
+
+            case 1:     // Distance d'un autre INS
+                if (orderOnHold && curPath.getDistance() > dat.getCommandData().get(0)) {
+                    cancelOrder();
+                }
+                break;
+
             default :
                 break;
         }

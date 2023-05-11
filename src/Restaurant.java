@@ -88,6 +88,8 @@ public class Restaurant extends SimFactory {
 
                 if (val == 6) {
                     this.environment.addComponent(new int[] {x, y}, val, typeColor(val));
+                    
+                    Main.air.addINS(new INS(0, "INS " + String.valueOf(0), 2, 0, new int[] {x, y}, Main.height, Main.width, Main.env));
                 }
             }
         }
