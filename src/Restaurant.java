@@ -7,7 +7,7 @@ import fr.emse.fayol.maqit.simulator.environment.GridManagement;
 public class Restaurant extends SimFactory {
     private List<String> file;
 
-    private int[] typeColor(int x) {
+    public static int[] typeColor(int x) {
         int[] col;
 
         switch (x) {

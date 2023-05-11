@@ -29,7 +29,7 @@ public class Main {
         int height = Integer.parseInt(file.remove(0));
 
         Random rng = new Random();
-        GridManagement env = new GridManagement(rng.nextInt(), width, height, "ASMR : Automatic Service Miaou Restaurant", 0, 0, width * 24, height * 24, 0);
+        OpenGridManagement env = new OpenGridManagement(rng.nextInt(), width, height, "ASMR : Automatic Service Miaou Restaurant", 0, 0, width * 24, height * 24, 0);
 
         Restaurant asmr = new Restaurant(sp, env, file);
     }
