@@ -1,8 +1,6 @@
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import org.junit.internal.runners.InitializationError;
-
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 
@@ -62,7 +60,7 @@ public class INS extends GridTurtlebot {
                     break;
             }
                 
-            CellNode cur = new CellNode(new ColorCell(restaurantLayout.getEnvironment().getCellContent(x, y)), new int[]{x, y});
+            CellNode cur = new CellNode(new ColorCell(restaurantLayout.getEnvironment().getCellContent(cx, cy)), new int[]{cx, cy});
 
             if (cur.getCell().getColor() == Restaurant.typeColor(0))
                 res.add(cur);
@@ -101,7 +99,7 @@ public class INS extends GridTurtlebot {
                     } else {
                         if (child.getDistance() > cur.getDistance() + 1) {
                             child.setDistance(cur.getDistance() + 1);
-                            
+
                             if (close.contains(child)) {
                                 close.remove(child);
                                 close.add(child);

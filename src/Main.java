@@ -7,7 +7,6 @@ import java.util.Random;
 
 import fr.emse.fayol.maqit.simulator.configuration.IniFile;
 import fr.emse.fayol.maqit.simulator.configuration.SimProperties;
-import fr.emse.fayol.maqit.simulator.environment.GridManagement;
 
 public class Main {
     public static void main(String[] args) throws IOException{
