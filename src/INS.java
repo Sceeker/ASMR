@@ -121,7 +121,7 @@ public class INS extends GridTurtlebot {
 
     private void manageOrder() {
         if (orderOnHold) {
-
+            followPath(curPath.coordsArray());
         }
     }
 
@@ -173,6 +173,7 @@ public class INS extends GridTurtlebot {
     }
 
     public void followPath (int[][] coord) {
+        int[] lastCoords = getLocation();
         for (int i = 0; i < coord.length; i++) {
             if (coord[i + 1][0] - coord[i][0] > 0) {
                 if (getCurrentOrientation() == Orientation.up) {
@@ -226,6 +227,8 @@ public class INS extends GridTurtlebot {
                     }
             }
             this.moveForward();
+
+            restaurantLayout.addComponent(lastCoords, 0, Restaurant.typeColor(0));
         }
     }
 }
