@@ -7,13 +7,9 @@ import java.util.Random;
 
 import fr.emse.fayol.maqit.simulator.configuration.IniFile;
 import fr.emse.fayol.maqit.simulator.configuration.SimProperties;
+import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 
 public class Main {
-    public static Airwaves air = new Airwaves();
-    public static int width;
-    public static int height;
-    public static OpenGridManagement env;
-
     public static void main(String[] args) throws IOException{
 		IniFile configFile;
 		
@@ -26,15 +22,27 @@ public class Main {
 		
 		SimProperties sp = new SimProperties(configFile);
 
+        sp.simulationParams();
+
+        if (sp.display == 1) {
+            sp.displayParams();
+            ColorCell.defaultcolor = new int[3];   
+            ColorCell.defaultcolor[0] = sp.colorunknown.getRed();
+            ColorCell.defaultcolor[1] = sp.colorunknown.getGreen();
+            ColorCell.defaultcolor[2] = sp.colorunknown.getBlue();
+        }
+
         Path path = Paths.get(args[1]);
         List<String> file = Files.readAllLines(path);
 
-        width = Integer.parseInt(file.remove(0));
-        height = Integer.parseInt(file.remove(0));
+        int width = Integer.parseInt(file.remove(0));
+        int height = Integer.parseInt(file.remove(0));
 
         Random rng = new Random();
-        env = new OpenGridManagement(rng.nextInt(), width, height, "ASMR : Automatic Service Miaou Restaurant", 0, 0, width * 24, height * 24, 0);
+        OpenGridManagement env = new OpenGridManagement(rng.nextInt(), height, width, sp.display_title, sp.display_x, sp.display_y, height * 32,  width * 32, 0);
 
         Restaurant asmr = new Restaurant(sp, env, file);
+
+        asmr.schedule();
     }
 }

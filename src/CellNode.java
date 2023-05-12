@@ -6,9 +6,15 @@ public class CellNode {
     private int g;
     private int h;
 
-    public CellNode(ColorCell ColorCell, int[] coords) {
-        cl = ColorCell;
+    public CellNode(ColorCell cell, int[] coords) {
+        this(cell, coords, 0, 0);
+    }
+
+    public CellNode(ColorCell cell, int[] coords, int g, int h) {
+        cl = cell;
         this.coords = coords;
+        this.g = g;
+        this.h = h;
     }
 
     public void setCell(ColorCell ColorCell) {

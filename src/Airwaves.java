@@ -20,6 +20,10 @@ public class Airwaves {
         bots.remove(bot);
     }
 
+    public List<INS> getBots() {
+        return bots;
+    }
+
     public void radioTransmission(RadioData dat) {
         for (INS bot : bots) {
             if (dat.getOrigin() != bot)

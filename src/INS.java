@@ -1,128 +1,30 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
-import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 import fr.emse.fayol.maqit.simulator.environment.ColorCell;
+import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 
 public class INS extends GridTurtlebot {
-    private OpenGridManagement restaurantLayout;
+    private Restaurant restaurant;
     private boolean orderOnHold;
+    private boolean follow;
     private GridPath curPath;
+    private int pathStep;
 
-    public INS(int id, String name, int field, int debug, int[] pos, int r, int c, OpenGridManagement env) {
+    public INS(int id, String name, int field, int debug, int[] pos, int r, int c, Restaurant restaurant) {
         super(id, name, field, debug, pos, r, c);
 
-        restaurantLayout = env;
+        this.restaurant = restaurant;
         orderOnHold = false;
-    }
-
-    private CellNode chooseCell(ArrayList<CellNode> cells) {
-        int minf = Integer.MAX_VALUE;
-        CellNode res = cells.get(0);
-
-        for (CellNode cell: cells) {
-            int curf = cell.getDistance() + cell.getHeuristic();
-
-            if (curf < minf) {
-                minf = curf;
-                res = cell;
-            }
-        }
-
-        return res;
-    }
-
-    private ArrayList<CellNode> freeNeighboringCells(CellNode cell) {
-        int x = cell.getCoords()[0];
-        int y = cell.getCoords()[0];
-        ArrayList<CellNode> res = new ArrayList<CellNode>();
-
-        int cx = 0;
-        int cy = 0;
-
-        for (int i = 0; i < 4; i++) {
-            switch (i) {
-                case 0:
-                    cx = x;
-                    cy = y + 1;
-                    break;
-
-                case 1:
-                    cx = x - 1;
-                    cy = y;
-                    break;
-
-                case 2:
-                    cx = x + 1;
-                    cy = y;
-                    break;
-
-                case 3:
-                    cx = x;
-                    cy = y - 1;
-                    break;
-            }
-                
-            CellNode cur = new CellNode(new ColorCell(restaurantLayout.getEnvironment().getCellContent(cx, cy)), new int[]{cx, cy});
-
-            if (cur.getCell().getColor() == Restaurant.typeColor(0))
-                res.add(cur);
-        }
-
-        return res;
-    }
-
-    private int manhattanDistance(int ox, int oy, int x, int y) {
-        return Math.abs(y - oy) + Math.abs(ox - x);
-    }
-
-    private GridPath findPath(int x, int y) {
-        ArrayList<CellNode> open = new ArrayList<CellNode>();
-        LinkedList<CellNode> close = new LinkedList<CellNode>();
-        GridPath res = new GridPath();
-
-        open.add(new CellNode(new ColorCell(restaurantLayout.getEnvironment().getCellContent(x, y)), new int[]{x, y}));
-
-        while (! open.isEmpty()) {
-            CellNode cur = chooseCell(open);
-            open.remove(cur);
-            close.add(cur);
-            res.addCell(cur);
-
-            if (cur.getCoords()[0] == x && cur.getCoords()[1] == y) {
-                return res;
-            } else {
-                ArrayList<CellNode> children = freeNeighboringCells(cur);
-
-                for (CellNode child: children) {
-                    if (! (open.contains(child) || close.contains(child))) {
-                        child.setDistance(cur.getDistance() + 1);
-                        child.setHeuristic(manhattanDistance(child.getCoords()[0], child.getCoords()[1], x, y));
-                        open.add(child);
-                    } else {
-                        if (child.getDistance() > cur.getDistance() + 1) {
-                            child.setDistance(cur.getDistance() + 1);
-
-                            if (close.contains(child)) {
-                                close.remove(child);
-                                close.add(child);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return res;
+        follow = false;
+        pathStep = 0;
     }
 
     private void manageOrder() {
-        if (orderOnHold) {
-            followPath(curPath.coordsArray());
-        }
+        orderOnHold = false;
+        follow = true;
     }
 
     private void registerOrder() {
@@ -151,8 +53,14 @@ public class INS extends GridTurtlebot {
             case 0:     // Une table veut commander
                 registerOrder();
 
-                curPath = findPath(dat.getCommandData().get(0), dat.getCommandData().get(1));
-                Main.air.radioTransmission(new RadioData(this, 1, new ArrayList<Integer>(curPath.getDistance())));
+                PathFinding solver = new PathFinding(restaurant);
+                int content = restaurant.getEnv().getEnvironment().getCellContent(getLocation()[0], getLocation()[1]);
+                CellNode start = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[] {getLocation()[0], getLocation()[1]});
+                curPath = solver.findPath(start, new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
+
+                ArrayList<Integer> trans = new ArrayList<Integer>();
+                trans.add(curPath.getDistance());
+                restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
                 break;
 
             case 1:     // Distance d'un autre INS
@@ -168,67 +76,68 @@ public class INS extends GridTurtlebot {
 
     @Override
     public void move(int arg0) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'move'");
+        if (follow) {
+            followPath();
+        }
     }
 
-    public void followPath (int[][] coord) {
+    public void followPath() {
         int[] lastCoords = getLocation();
-        for (int i = 0; i < coord.length; i++) {
-            if (coord[i + 1][0] - coord[i][0] > 0) {
-                if (getCurrentOrientation() == Orientation.up) {
-                    this.moveRight();
-                }
-                if (getCurrentOrientation() == Orientation.down) {
-                    this.moveLeft();
-                }
-                if (getCurrentOrientation() == Orientation.left) {
-                    this.moveRight();
-                    this.moveRight();
-                }
-            }
+        int[][] coord = curPath.coordsArray();
 
-            if (coord[i + 1][0] - coord[i][0] < 0) {
-                if (getCurrentOrientation() == Orientation.up) {
-                    this.moveLeft();
-                }
-                if (getCurrentOrientation() == Orientation.down) {
-                    this.moveRight();
-                }
-                if (getCurrentOrientation() == Orientation.right) {
-                    this.moveRight();
-                    this.moveRight();
-                }
+        if (coord[pathStep + 1][1] - coord[pathStep][1] > 0) {
+            if (getCurrentOrientation() == Orientation.up) {
+                this.moveRight();
             }
-
-            if (coord[i + 1][1] - coord[i][1] > 0) {
-                if (getCurrentOrientation() == Orientation.left) {
-                    this.moveRight();
-                }
-                if (getCurrentOrientation() == Orientation.right) {
-                    this.moveLeft();
-                }
-                if (getCurrentOrientation() == Orientation.down) {
-                    this.moveRight();
-                    this.moveRight();
-                }
+            if (getCurrentOrientation() == Orientation.down) {
+                this.moveLeft();
             }
-
-                if (coord[i + 1][1] - coord[i][1] < 0) {
-                    if (getCurrentOrientation() == Orientation.left) {
-                        this.moveLeft();
-                    }
-                    if (getCurrentOrientation() == Orientation.right) {
-                        this.moveRight();
-                    }
-                    if (getCurrentOrientation() == Orientation.up) {
-                        this.moveRight();
-                        this.moveRight();
-                    }
+            if (getCurrentOrientation() == Orientation.left) {
+                this.moveRight();
+                this.moveRight();
             }
-            this.moveForward();
-
-            restaurantLayout.addComponent(lastCoords, 0, Restaurant.typeColor(0));
         }
+
+        if (coord[pathStep + 1][1] - coord[pathStep][1] < 0) {
+            if (getCurrentOrientation() == Orientation.up) {
+                this.moveLeft();
+            }
+            if (getCurrentOrientation() == Orientation.down) {
+                this.moveRight();
+            }
+            if (getCurrentOrientation() == Orientation.right) {
+                this.moveRight();
+                this.moveRight();
+            }
+        }
+
+        if (coord[pathStep + 1][0] - coord[pathStep][0] > 0) {
+            if (getCurrentOrientation() == Orientation.left) {
+                this.moveRight();
+            }
+            if (getCurrentOrientation() == Orientation.right) {
+                this.moveLeft();
+            }
+            if (getCurrentOrientation() == Orientation.down) {
+                this.moveRight();
+                this.moveRight();
+            }
+        }
+
+            if (coord[pathStep + 1][0] - coord[pathStep][0] < 0) {
+                if (getCurrentOrientation() == Orientation.left) {
+                    this.moveLeft();
+                }
+                if (getCurrentOrientation() == Orientation.right) {
+                    this.moveRight();
+                }
+                if (getCurrentOrientation() == Orientation.up) {
+                    this.moveRight();
+                    this.moveRight();
+                }
+        }
+        this.moveForward();
+
+        restaurant.getEnv().addComponent(lastCoords, 0, restaurant.typeColor(0));
     }
 }
