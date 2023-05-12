@@ -27,23 +27,23 @@ public class PathFinding {
         for (int i = 0; i < 4; i++) {
             switch (i) {
                 case 0:
-                    cx = x;
-                    cy = y + 1;
-                    break;
-
-                case 1:
-                    cx = x - 1;
-                    cy = y;
-                    break;
-
-                case 2:
                     cx = x + 1;
                     cy = y;
                     break;
 
-                default:
+                case 1:
                     cx = x;
                     cy = y - 1;
+                    break;
+
+                case 2:
+                    cx = x;
+                    cy = y + 1;
+                    break;
+
+                default:
+                    cx = x - 1;
+                    cy = y;
                     break;
             }
     
@@ -97,8 +97,9 @@ public class PathFinding {
 
         while (! open.isEmpty()) {
             CellNode cur = chooseCell(open);
-            open.remove(cur);
+
             close.add(cur);
+            open.clear();
 
             if (Arrays.equals(cur.getCoords(), dest)) {
                 break;
@@ -106,34 +107,17 @@ public class PathFinding {
                 ArrayList<CellNode> children = freeNeighboringCells(cur, dest);
 
                 for (CellNode child: children) {
-                    if (! (cellPresent(close, child) > 0  || cellPresent(open, child) > 0)) {
+                    int tmp = cellPresent(close, child);
+
+                    if (tmp < 0) {
                         child.setDistance(cur.getDistance() + 1);
                         child.setHeuristic(manhattanDistance(child.getCoords()[0], child.getCoords()[1], dest[0], dest[1]));
                         open.add(child);
                     } else {
-                        boolean inClose = false;
-
-                        int tmp = cellPresent(close, child);
-                        if (tmp > 0) {
-                            inClose = true;
-                            child = close.get(tmp);
-                        }
-
-                        tmp = cellPresent(open, child);
-                        if (tmp > 0) {
-                            child = open.get(tmp);
-                        }
-
                         if (child.getDistance() > cur.getDistance() + 1) {
                             CellNode newChild = child;
                             newChild.setDistance(cur.getDistance() + 1);
-
-                            if (inClose) {
-                                close.remove(child);
-                            } else {
-                                open.remove(child);
-                            }
-
+                            close.remove(child);
                             open.add(child);
                         }
                     }

@@ -1,33 +1,16 @@
-import java.util.List;
-import java.util.ArrayList;
-
 public class Airwaves {
-    private List<INS> bots;
+    private Restaurant restaurant;
 
-    public Airwaves(List<INS> bots) {
-        this.bots = bots;
-    }
-
-    public Airwaves() {
-        this(new ArrayList<INS>());   
-    }
-
-    public void addINS(INS bot) {
-        bots.add(bot);
-    }
-
-    public void removeINS(INS bot) {
-        bots.remove(bot);
-    }
-
-    public List<INS> getBots() {
-        return bots;
+    public Airwaves(Restaurant restaurant) {
+        this.restaurant = restaurant;
     }
 
     public void radioTransmission(RadioData dat) {
-        for (INS bot : bots) {
+        for (INS bot : restaurant.getBots()) {
             if (dat.getOrigin() != bot)
                 bot.radioReception(dat);
         }
+        
+        System.out.println("[RADIO] Command " + dat.getCommandId());
     }
 }

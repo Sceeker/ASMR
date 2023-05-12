@@ -12,6 +12,7 @@ public class Restaurant extends SimFactory {
     private int height, width;
     private ArrayList<Customer> customers;
     private ArrayList<Table> tables;
+    private ArrayList<INS> bots;
 
     public int[] typeColor(int x) {
         int[] col;
@@ -60,7 +61,8 @@ public class Restaurant extends SimFactory {
 
         customers = new ArrayList<Customer>();
         tables = new ArrayList<Table>();
-        air = new Airwaves();
+        air = new Airwaves(this);
+        bots = new ArrayList<INS>();
 
         createObstacle();
         createTurtlebot();
@@ -84,6 +86,10 @@ public class Restaurant extends SimFactory {
 
     public ArrayList<Table> getTables() {
         return tables;
+    }
+
+    public ArrayList<INS> getBots() {
+        return bots;
     }
 
     @Override
@@ -122,7 +128,7 @@ public class Restaurant extends SimFactory {
                 if (val == 6) {
                     this.environment.addComponent(new int[] {y, x}, val, typeColor(val));
                     
-                    air.addINS(new INS(0, "INS " + String.valueOf(0), 2, 0, new int[] {y, x}, height, width, this));
+                    bots.add(new INS(0, "INS " + String.valueOf(0), 2, 0, new int[] {y, x}, height, width, this));
                 }
             }
         }
@@ -135,6 +141,12 @@ public class Restaurant extends SimFactory {
 
     @Override
     public void schedule() {
+        try {
+            TimeUnit.MILLISECONDS.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         for (int i = 0; i < 1000; i++) {
             
 
@@ -153,13 +165,13 @@ public class Restaurant extends SimFactory {
                 environment.addComponent(new int[] {9, 3}, 5, typeColor(5));
             }
 
-            for (GridTurtlebot bot: air.getBots()) {
+            for (GridTurtlebot bot: bots) {
                 bot.move(0);
             }
     
             System.out.println("Step " + i);
             try {
-                TimeUnit.MILLISECONDS.sleep(250);
+                TimeUnit.MILLISECONDS.sleep(1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

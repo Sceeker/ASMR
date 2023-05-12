@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -78,11 +79,24 @@ public class INS extends GridTurtlebot {
     public void move(int arg0) {
         if (follow) {
             followPath();
+
+            if (Arrays.equals(curPath.coordsArray()[curPath.coordsArray().length - 1], getLocation()))
+                follow = false;
         }
     }
 
     public void followPath() {
-        int[] lastCoords = getLocation();
+        int[] next = curPath.coordsArray()[pathStep];
+
+        restaurant.getEnv().moveComponent(getLocation(), next, 6);
+
+        restaurant.getEnv().addComponent(getLocation(), 0, restaurant.typeColor(0));
+
+        setLocation(next);
+
+        pathStep++;
+
+    /*    int[] lastCoords = getLocation();
         int[][] coord = curPath.coordsArray();
 
         if (coord[pathStep + 1][1] - coord[pathStep][1] > 0) {
@@ -124,20 +138,22 @@ public class INS extends GridTurtlebot {
             }
         }
 
-            if (coord[pathStep + 1][0] - coord[pathStep][0] < 0) {
-                if (getCurrentOrientation() == Orientation.left) {
-                    this.moveLeft();
-                }
-                if (getCurrentOrientation() == Orientation.right) {
-                    this.moveRight();
-                }
-                if (getCurrentOrientation() == Orientation.up) {
-                    this.moveRight();
-                    this.moveRight();
-                }
+        if (coord[pathStep + 1][0] - coord[pathStep][0] < 0) {
+            if (getCurrentOrientation() == Orientation.left) {
+                this.moveLeft();
+            }
+            if (getCurrentOrientation() == Orientation.right) {
+                this.moveRight();
+            }
+            if (getCurrentOrientation() == Orientation.up) {
+                this.moveRight();
+                this.moveRight();
+            }
         }
+
         this.moveForward();
 
         restaurant.getEnv().addComponent(lastCoords, 0, restaurant.typeColor(0));
+    */
     }
 }

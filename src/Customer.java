@@ -9,7 +9,7 @@ public class Customer {
     private GridPath curPath;
     private int pathStep;
     private int[] pos;
-    private Table goalTable;
+    private int[] goal;
 
     public Customer(int[] pos, Restaurant restaurant) {
         this.restaurant = restaurant;
@@ -26,8 +26,8 @@ public class Customer {
                 restaurant.getEnv().moveComponent(pos, pos, 0);
 
                 ArrayList<Integer> trans = new ArrayList<Integer>();
-                trans.add(goalTable.getCoords()[0]);
-                trans.add(goalTable.getCoords()[1]);
+                trans.add(goal[0]);
+                trans.add(goal[1]);
                 restaurant.getAir().radioTransmission(new RadioData(null, 0, trans));
 
                 return true;
@@ -37,13 +37,12 @@ public class Customer {
         } else {
             for (Table table: restaurant.getTables()) {
                 if (! table.isTaken()) {
-                    goalTable = table;
-                    int[] coords = table.takeTable(pos);
+                    goal = table.takeTable(pos);
 
                     PathFinding solver = new PathFinding(restaurant);
                     int content = restaurant.getEnv().getEnvironment().getCellContent(pos[0], pos[1]);
                     CellNode start = new CellNode(new ColorCell(content, restaurant.typeColor(content)), pos);
-                    curPath = solver.findPath(start, coords);
+                    curPath = solver.findPath(start, goal);
 
                     break;
                 }
