@@ -3,6 +3,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
@@ -33,6 +34,11 @@ public class INS extends GridTurtlebot {
 
     private void manageOrder() {
         follow = true;
+
+        ArrayList<Integer> trans = new ArrayList<Integer>();
+        trans.add(orderOnHold[0]);
+        trans.add(orderOnHold[1]);
+        restaurant.getAir().radioTransmission(new RadioData(this, 5, trans));
     }
 
     private void registerOrder() {
@@ -85,7 +91,7 @@ public class INS extends GridTurtlebot {
                 break;
 
             case 1:     // Distance d'un autre INS
-                if (state == INSState.taking && orderOnHold[0] == dat.getCommandData().get(1) && orderOnHold[1] == dat.getCommandData().get(2) && curPath.getDistance() > dat.getCommandData().get(0)) {
+                if (state == INSState.taking && Arrays.equals(orderOnHold, new int[] {dat.getCommandData().get(1), dat.getCommandData().get(2)}) && curPath.getDistance() > dat.getCommandData().get(0)) {
                     cancelOrder();
                 }
                 break;
@@ -109,6 +115,10 @@ public class INS extends GridTurtlebot {
                 break;
 
             case 4:
+                if (state == INSState.taking && Arrays.equals(orderOnHold, new int[] {dat.getCommandData().get(1), dat.getCommandData().get(2)}) && curPath.getDistance() > dat.getCommandData().get(0)) {
+                    cancelOrder();
+                }
+                break;
 
             default :
                 break;
@@ -128,7 +138,16 @@ public class INS extends GridTurtlebot {
                         state = INSState.delivering;
 
                         PathFinding solver = new PathFinding(restaurant);
-                        curPath = solver.findPath(getLocation(), getTable().findAccessor(getLocation())); 
+                        int[] tablepos = getTable().findAccessor(getLocation());
+                        while (tablepos == null) {
+                            try {
+                                TimeUnit.MILLISECONDS.sleep(50);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            tablepos = getTable().findAccessor(getLocation());
+                        }
+                        curPath = solver.findPath(getLocation(), tablepos); 
                         break;
 
                     case delivering:

@@ -199,15 +199,7 @@ public class Restaurant extends SimFactory {
 
     @Override
     public void schedule() {
-        try {
-            TimeUnit.MILLISECONDS.sleep(6000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         for (int i = 0; i < 1000; i++) {
-            
-
             if (! customers.isEmpty()) {
                 ArrayList<Integer> toRemove = new ArrayList<Integer>();
                 for (Customer customer: customers) {
@@ -231,7 +223,7 @@ public class Restaurant extends SimFactory {
     
             System.out.println("Step " + i);
             try {
-                TimeUnit.MILLISECONDS.sleep(150);
+                TimeUnit.MILLISECONDS.sleep(50);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

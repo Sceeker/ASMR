@@ -11,6 +11,10 @@ public class Airwaves {
                 bot.radioReception(dat);
         }
 
+        for (Table table: restaurant.getTables()) {
+            table.radioReception(dat);
+        }
+
         restaurant.getKitchen().radioReception(dat);
         
         System.out.println("[RADIO] Command " + dat.getCommandId());

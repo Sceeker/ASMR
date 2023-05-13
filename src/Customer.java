@@ -38,7 +38,7 @@ public class Customer {
                     trans.add(goal[1]);
                     trans.add(goalTable.getCoords()[0]);
                     trans.add(goalTable.getCoords()[1]);
-                    restaurant.getAir().radioTransmission(new RadioData(null, 0, trans));
+                    goalTable.sit(new RadioData(null, 0, trans));
                 }
 
                 return true;

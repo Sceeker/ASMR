@@ -132,8 +132,10 @@ public class PathFinding {
             }
         }
 
-        if (! Arrays.equals(cur.getCoords(), dest))
+        if (! Arrays.equals(cur.getCoords(), dest)) {
+            System.out.println("Error finding path from [" + start[0] + "," + start[1] + "] to [" + dest[0] + "," + dest[1] + "]");
             System.exit(1);
+        }
 
         while (! Arrays.equals(cur.getCoords(), start)) {
             res.addCell(cur);

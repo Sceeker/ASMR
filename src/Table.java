@@ -1,9 +1,9 @@
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 
 enum TableState {
@@ -26,11 +26,13 @@ public class Table {
     private boolean taken;
     private int[] coords;
     private Restaurant restaurant;
+    private boolean waiterAssigned;
 
     public Table(int[] coords, Restaurant restaurant) {
         taken = false;
         this.coords = coords;
         this.restaurant = restaurant;
+        waiterAssigned = false;
 
         Collections.shuffle(restaurant.getTables());
     }
@@ -40,6 +42,9 @@ public class Table {
 
         ArrayList<CellNode> accessors = new ArrayList<CellNode>();
         accessors = solver.freeNeighboringCells(coords);
+
+        if (accessors.size() == 0)
+            return null;
 
         int minDist = Integer.MAX_VALUE;
         CellNode res = accessors.get(0);
@@ -60,8 +65,57 @@ public class Table {
         return findAccessor(orig);
     }
 
+    private void scheduleLeaving() {
+        TimerTask task = new TimerTask() {
+            public void run() {
+                leave();
+            }
+        };
+
+        Timer timer = new Timer();
+        
+        timer.schedule(task, 5000);
+    }
+
+    public void radioReception(RadioData dat) {
+        if (dat.getCommandId() == 5) {
+            int[] target = new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)};
+
+            if (Arrays.equals(target, coords))
+                waiterAssigned = true;
+        }
+    }
+
+    private void askForWaiter(RadioData dat) {
+        if (waiterAssigned)
+            return;
+
+        restaurant.getAir().radioTransmission(dat);
+
+        TimerTask task = new TimerTask() {
+            public void run() {
+                askForWaiter(dat);
+            }
+        };
+
+        Timer timer = new Timer();
+        
+        timer.schedule(task, 2000);
+    }
+
+    public void sit(RadioData dat) {
+        waiterAssigned = false;
+
+        askForWaiter(dat);
+    }
+
     private void leave() {
         int[] leavingPos = findAccessor(coords);
+
+        if (leavingPos == null) {
+            scheduleLeaving();
+            return;
+        }
 
         restaurant.getCustomers().add(new Customer(leavingPos, restaurant, true));
         restaurant.getEnv().addComponent(leavingPos, 5, restaurant.typeColor(5));
@@ -75,15 +129,7 @@ public class Table {
         restaurant.getEnv().moveComponent(coords, coords, step.getValue());
 
         if (step == TableState.occupied) {
-            TimerTask task = new TimerTask() {
-                public void run() {
-                    leave();
-                }
-            };
-    
-            Timer timer = new Timer();
-            
-            timer.schedule(task, 5000);
+            scheduleLeaving();
         }
     }
 
