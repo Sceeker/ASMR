@@ -46,6 +46,10 @@ public class Restaurant extends SimFactory {
                 col = new int[] {12, 134, 222};
                 break;
 
+            case 7:     // Taken table
+                col = new int[] {64, 64, 64};
+                break;
+
             default:    // Error cell
                 col = new int[] {255, 0, 0};
                 break;
@@ -142,7 +146,7 @@ public class Restaurant extends SimFactory {
     @Override
     public void schedule() {
         try {
-            TimeUnit.MILLISECONDS.sleep(1000);
+            TimeUnit.MILLISECONDS.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -160,7 +164,7 @@ public class Restaurant extends SimFactory {
                 for (int idx: toRemove) {
                     customers.remove(idx);
                 }
-            } else if (i % 100 == 0) {
+            } else {
                 customers.add(new Customer(new int[] {9, 3}, this));
                 environment.addComponent(new int[] {9, 3}, 5, typeColor(5));
             }
@@ -171,7 +175,7 @@ public class Restaurant extends SimFactory {
     
             System.out.println("Step " + i);
             try {
-                TimeUnit.MILLISECONDS.sleep(1000);
+                TimeUnit.MILLISECONDS.sleep(250);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

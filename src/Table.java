@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 
 import fr.emse.fayol.maqit.simulator.environment.ColorCell;
+import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 
 public class Table {
     private boolean taken;
@@ -19,8 +20,7 @@ public class Table {
         PathFinding solver = new PathFinding(restaurant);
 
         ArrayList<CellNode> accessors = new ArrayList<CellNode>();
-        accessors = solver.freeNeighboringCells(new CellNode(new ColorCell(2, restaurant.typeColor(2)), coords), orig);
-
+        accessors = solver.freeNeighboringCells(new CellNode(new ColorCell(2, restaurant.typeColor(2)), coords, null));
 
         int minDist = Integer.MAX_VALUE;
         CellNode res = accessors.get(0);

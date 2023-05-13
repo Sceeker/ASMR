@@ -16,7 +16,7 @@ public class PathFinding {
         return Math.abs(y - oy) + Math.abs(ox - x);
     }
 
-    public ArrayList<CellNode> freeNeighboringCells(CellNode cell, int[] dest) {
+    public ArrayList<CellNode> freeNeighboringCells(CellNode cell) {
         int x = cell.getCoords()[1];
         int y = cell.getCoords()[0];
         ArrayList<CellNode> res = new ArrayList<CellNode>();
@@ -49,10 +49,7 @@ public class PathFinding {
     
             if (restaurant.getEnv().validPosition(cy, cx)) {
                 int content = restaurant.getEnv().getEnvironment().getCellContent(cy, cx);
-                CellNode cur = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[]{cy, cx});
-
-                cur.setDistance(cell.getDistance() + 1);
-                cur.setHeuristic(manhattanDistance(cy, cx, dest[0], dest[1]));
+                CellNode cur = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[]{cy, cx}, null);
 
                 if (content == 0)
                     res.add(cur);
@@ -87,47 +84,58 @@ public class PathFinding {
         return -1;
     }
 
-    public GridPath findPath(CellNode start, int[] dest) {
+    public GridPath findPath(int[] start, int[] dest) {
         ArrayList<CellNode> open = new ArrayList<CellNode>();
         LinkedList<CellNode> close = new LinkedList<CellNode>();
+        GridPath res = new GridPath();
 
-        start.setDistance(0);
-        start.setHeuristic(manhattanDistance(start.getCoords()[0], start.getCoords()[1], dest[0], dest[1]));
-        open.add(start);
+        int content = restaurant.getEnv().getEnvironment().getCellContent(start[0], start[1]);
+        CellNode cur = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[] {start[0], start[1]}, null);
+        cur.setDistance(0);
+        cur.setHeuristic(manhattanDistance(start[0], start[1], dest[0], dest[1]));
+
+        open.add(cur);
 
         while (! open.isEmpty()) {
-            CellNode cur = chooseCell(open);
-
-            close.add(cur);
-            open.clear();
+            cur = chooseCell(open);
 
             if (Arrays.equals(cur.getCoords(), dest)) {
+                res.addCell(cur);
                 break;
             } else {
-                ArrayList<CellNode> children = freeNeighboringCells(cur, dest);
+                close.add(cur);
+                open.remove(cur);
+
+                ArrayList<CellNode> children = freeNeighboringCells(cur);
 
                 for (CellNode child: children) {
                     int tmp = cellPresent(close, child);
+                    if (tmp != -1) {
+                        child = close.get(tmp);
+                    }
 
-                    if (tmp < 0) {
+                    if (cur.getDistance() + 1 < child.getDistance()) {
+                        child.setParent(cur);
                         child.setDistance(cur.getDistance() + 1);
                         child.setHeuristic(manhattanDistance(child.getCoords()[0], child.getCoords()[1], dest[0], dest[1]));
-                        open.add(child);
-                    } else {
-                        if (child.getDistance() > cur.getDistance() + 1) {
-                            CellNode newChild = child;
-                            newChild.setDistance(cur.getDistance() + 1);
-                            close.remove(child);
+
+                        if (tmp != -1 ) {
+                            close.remove(tmp);
+                            close.add(child);
+                        } else if (cellPresent(open, child) == -1) {
                             open.add(child);
                         }
                     }
                 }
             }
         }
-
-        GridPath res = new GridPath();
-        for (CellNode cell: close)
-            res.addCell(cell);
+        
+        cur = close.getLast();
+        while (! Arrays.equals(cur.getCoords(), start)) {
+            res.addCell(cur);
+            cur = cur.getParent();
+        }
+        res.addCell(cur);        
             
         return res;
     }

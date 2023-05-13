@@ -4,12 +4,11 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
-import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 
 public class INS extends GridTurtlebot {
     private Restaurant restaurant;
-    private boolean orderOnHold;
+    private int[] orderOnHold;
     private boolean follow;
     private GridPath curPath;
     private int pathStep;
@@ -18,19 +17,17 @@ public class INS extends GridTurtlebot {
         super(id, name, field, debug, pos, r, c);
 
         this.restaurant = restaurant;
-        orderOnHold = false;
+        orderOnHold = null;
         follow = false;
         pathStep = 0;
     }
 
     private void manageOrder() {
-        orderOnHold = false;
+        orderOnHold = null;
         follow = true;
     }
 
     private void registerOrder() {
-        orderOnHold = true;
-
         TimerTask task = new TimerTask() {
             public void run() {
                 manageOrder();
@@ -43,8 +40,8 @@ public class INS extends GridTurtlebot {
     }
 
     private void cancelOrder() {
-        if (orderOnHold)
-            orderOnHold = false;
+        if (orderOnHold != null)
+            orderOnHold = null;
     }
 
     public void radioReception(RadioData dat) {
@@ -52,20 +49,24 @@ public class INS extends GridTurtlebot {
 
         switch (cmdId) {
             case 0:     // Une table veut commander
-                registerOrder();
+                if (! follow) {
+                    orderOnHold = new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)};
+                    registerOrder();
 
-                PathFinding solver = new PathFinding(restaurant);
-                int content = restaurant.getEnv().getEnvironment().getCellContent(getLocation()[0], getLocation()[1]);
-                CellNode start = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[] {getLocation()[0], getLocation()[1]});
-                curPath = solver.findPath(start, new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
+                    PathFinding solver = new PathFinding(restaurant);
+                    
+                    curPath = solver.findPath(getLocation(), orderOnHold);
 
-                ArrayList<Integer> trans = new ArrayList<Integer>();
-                trans.add(curPath.getDistance());
-                restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
+                    ArrayList<Integer> trans = new ArrayList<Integer>();
+                    trans.add(curPath.getDistance());
+                    trans.add(orderOnHold[0]);
+                    trans.add(orderOnHold[1]);
+                    restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
+                }
                 break;
 
             case 1:     // Distance d'un autre INS
-                if (orderOnHold && curPath.getDistance() > dat.getCommandData().get(0)) {
+                if (orderOnHold[0] == dat.getCommandData().get(1) && orderOnHold[1] == dat.getCommandData().get(2) && curPath.getDistance() > dat.getCommandData().get(0)) {
                     cancelOrder();
                 }
                 break;
@@ -80,80 +81,78 @@ public class INS extends GridTurtlebot {
         if (follow) {
             followPath();
 
-            if (Arrays.equals(curPath.coordsArray()[curPath.coordsArray().length - 1], getLocation()))
+            if (Arrays.equals(curPath.coordsArray()[curPath.coordsArray().length - 1], getLocation())) {
                 follow = false;
+                pathStep = 0;
+                curPath = null;
+                orderOnHold = null;
+            }
         }
     }
 
     public void followPath() {
+        int[] cur = curPath.coordsArray()[pathStep];
+        pathStep++;
         int[] next = curPath.coordsArray()[pathStep];
 
         restaurant.getEnv().moveComponent(getLocation(), next, 6);
 
         restaurant.getEnv().addComponent(getLocation(), 0, restaurant.typeColor(0));
 
-        setLocation(next);
-
-        pathStep++;
-
-    /*    int[] lastCoords = getLocation();
-        int[][] coord = curPath.coordsArray();
-
-        if (coord[pathStep + 1][1] - coord[pathStep][1] > 0) {
+        if (next[1] - cur[1] > 0) {
             if (getCurrentOrientation() == Orientation.up) {
-                this.moveRight();
+                moveRight();
             }
             if (getCurrentOrientation() == Orientation.down) {
-                this.moveLeft();
+                moveLeft();
             }
             if (getCurrentOrientation() == Orientation.left) {
-                this.moveRight();
-                this.moveRight();
+                moveRight();
+                moveRight();
             }
         }
 
-        if (coord[pathStep + 1][1] - coord[pathStep][1] < 0) {
+        if (next[1] - cur[1] < 0) {
             if (getCurrentOrientation() == Orientation.up) {
-                this.moveLeft();
+                moveLeft();
             }
             if (getCurrentOrientation() == Orientation.down) {
-                this.moveRight();
+                moveRight();
             }
             if (getCurrentOrientation() == Orientation.right) {
-                this.moveRight();
-                this.moveRight();
+                moveRight();
+                moveRight();
             }
         }
 
-        if (coord[pathStep + 1][0] - coord[pathStep][0] > 0) {
+        if (next[0] - cur[0] < 0) {
             if (getCurrentOrientation() == Orientation.left) {
-                this.moveRight();
+                moveRight();
             }
             if (getCurrentOrientation() == Orientation.right) {
-                this.moveLeft();
+                moveLeft();
             }
             if (getCurrentOrientation() == Orientation.down) {
-                this.moveRight();
-                this.moveRight();
+                moveRight();
+                moveRight();
             }
         }
 
-        if (coord[pathStep + 1][0] - coord[pathStep][0] < 0) {
+        if (next[0] - cur[0] > 0) {
             if (getCurrentOrientation() == Orientation.left) {
-                this.moveLeft();
+                moveLeft();
             }
             if (getCurrentOrientation() == Orientation.right) {
-                this.moveRight();
+                moveRight();
             }
             if (getCurrentOrientation() == Orientation.up) {
-                this.moveRight();
-                this.moveRight();
+                moveRight();
+                moveRight();
             }
         }
 
         this.moveForward();
 
-        restaurant.getEnv().addComponent(lastCoords, 0, restaurant.typeColor(0));
-    */
+        restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
     }
 }

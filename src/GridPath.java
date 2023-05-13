@@ -21,7 +21,7 @@ public class GridPath {
     }
 
     public void addCell(CellNode cell) {
-        path.add(cell);
+        path.addFirst(cell);
         computeDistance();
     }
 

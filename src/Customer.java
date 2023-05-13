@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 
 public class Customer {
@@ -25,6 +24,9 @@ public class Customer {
                 ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(pos[0], pos[1], 0, restaurant.typeColor(0));
                 restaurant.getEnv().moveComponent(pos, pos, 0);
 
+                ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(goal[0], goal[1], 0, restaurant.typeColor(7));
+                restaurant.getEnv().moveComponent(goal, goal, 7);
+
                 ArrayList<Integer> trans = new ArrayList<Integer>();
                 trans.add(goal[0]);
                 trans.add(goal[1]);
@@ -40,9 +42,7 @@ public class Customer {
                     goal = table.takeTable(pos);
 
                     PathFinding solver = new PathFinding(restaurant);
-                    int content = restaurant.getEnv().getEnvironment().getCellContent(pos[0], pos[1]);
-                    CellNode start = new CellNode(new ColorCell(content, restaurant.typeColor(content)), pos);
-                    curPath = solver.findPath(start, goal);
+                    curPath = solver.findPath(new int[] {pos[0], pos[1]}, goal);
 
                     break;
                 }
