@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import fr.emse.fayol.maqit.simulator.SimFactory;
@@ -10,9 +11,12 @@ public class Restaurant extends SimFactory {
     private Airwaves air;
     private List<String> file;
     private int height, width;
+    private Kitchen kitchen;
     private ArrayList<Customer> customers;
     private ArrayList<Table> tables;
     private ArrayList<INS> bots;
+    private ArrayList<int[]> collectPoints;
+    private ArrayList<int[]> doors;
 
     public int[] typeColor(int x) {
         int[] col;
@@ -27,7 +31,7 @@ public class Restaurant extends SimFactory {
                 break;
 
             case 2:     // Table
-                col = new int[] {128, 128, 128};
+                col = new int[] {200, 200, 200};
                 break;
 
             case 3:     // Collect point
@@ -47,8 +51,17 @@ public class Restaurant extends SimFactory {
                 break;
 
             case 7:     // Taken table
-                col = new int[] {64, 64, 64};
+                col = new int[] {150, 150, 150};
                 break;
+
+            case 8:     // Table wanting to order
+                col = new int[] {100, 100, 100};
+                break;
+
+            case 9:     // Table waiting for its order
+                col = new int[] {50, 50, 50};
+                break;
+
 
             default:    // Error cell
                 col = new int[] {255, 0, 0};
@@ -67,9 +80,10 @@ public class Restaurant extends SimFactory {
         tables = new ArrayList<Table>();
         air = new Airwaves(this);
         bots = new ArrayList<INS>();
+        kitchen = new Kitchen(this);
 
-        createObstacle();
         createTurtlebot();
+        createObstacle();
     }
 
     public int getHeight() {
@@ -96,8 +110,39 @@ public class Restaurant extends SimFactory {
         return bots;
     }
 
+    public Kitchen getKitchen() {
+        return kitchen;
+    }
+
+    public ArrayList<int[]> getCollectPoints() {
+        return collectPoints;
+    }
+
+    public ArrayList<int[]> getDoors() {
+        return doors;
+    }
+
+    public ArrayList<Customer> getCustomers() {
+        return customers;
+    }
+
+    private ArrayList<int[]> createAccessors(ArrayList<int[]> lst) {
+        ArrayList<int[]> res = new ArrayList<int[]>();
+
+        for (int[] el: lst) {
+            PathFinding solver = new PathFinding(this);
+            int[] loc = solver.freeNeighboringCells(el).get(0).getCoords();
+            res.add(loc);
+        }
+
+        return res;
+    }
+
     @Override
     public void createObstacle() {
+        ArrayList<int[]> fcps = new ArrayList<int[]>();
+        ArrayList<int[]> fd = new ArrayList<int[]>();
+
         for (int y = 0; y < environment.getRows(); y++) {
             char[] cur = this.file.get(y).toCharArray();
 
@@ -110,9 +155,18 @@ public class Restaurant extends SimFactory {
 
                     if (val == 2)
                         tables.add(new Table(new int[] {y, x}, this));
+
+                    if (val == 3) 
+                        fcps.add(new int[] {y, x});
+
+                    if (val == 4)
+                        fd.add(new int[] {y, x});
                 }
             }
         }
+
+        doors = createAccessors(fd);
+        collectPoints = createAccessors(fcps);
     }
 
     @Override
@@ -146,7 +200,7 @@ public class Restaurant extends SimFactory {
     @Override
     public void schedule() {
         try {
-            TimeUnit.MILLISECONDS.sleep(5000);
+            TimeUnit.MILLISECONDS.sleep(6000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -164,9 +218,11 @@ public class Restaurant extends SimFactory {
                 for (int idx: toRemove) {
                     customers.remove(idx);
                 }
-            } else {
-                customers.add(new Customer(new int[] {9, 3}, this));
-                environment.addComponent(new int[] {9, 3}, 5, typeColor(5));
+            } else if (i % 50 == 0) {
+                Random rng = new Random();
+                int[] entry = doors.get(rng.nextInt(doors.size()));
+                customers.add(new Customer(entry, this));
+                environment.addComponent(entry, 5, typeColor(5));
             }
 
             for (GridTurtlebot bot: bots) {
@@ -175,7 +231,7 @@ public class Restaurant extends SimFactory {
     
             System.out.println("Step " + i);
             try {
-                TimeUnit.MILLISECONDS.sleep(250);
+                TimeUnit.MILLISECONDS.sleep(150);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }

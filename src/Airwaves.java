@@ -10,6 +10,8 @@ public class Airwaves {
             if (dat.getOrigin() != bot)
                 bot.radioReception(dat);
         }
+
+        restaurant.getKitchen().radioReception(dat);
         
         System.out.println("[RADIO] Command " + dat.getCommandId());
     }

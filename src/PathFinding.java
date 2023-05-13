@@ -1,3 +1,5 @@
+import static org.junit.Assert.fail;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -12,13 +14,13 @@ public class PathFinding {
         this.restaurant = restaurant;
     }
 
-    private int manhattanDistance(int ox, int oy, int x, int y) {
+    public static int manhattanDistance(int ox, int oy, int x, int y) {
         return Math.abs(y - oy) + Math.abs(ox - x);
     }
 
-    public ArrayList<CellNode> freeNeighboringCells(CellNode cell) {
-        int x = cell.getCoords()[1];
-        int y = cell.getCoords()[0];
+    public ArrayList<CellNode> freeNeighboringCells(int[] coords) {
+        int x = coords[1];
+        int y = coords[0];
         ArrayList<CellNode> res = new ArrayList<CellNode>();
 
         int cx = 0;
@@ -106,7 +108,7 @@ public class PathFinding {
                 close.add(cur);
                 open.remove(cur);
 
-                ArrayList<CellNode> children = freeNeighboringCells(cur);
+                ArrayList<CellNode> children = freeNeighboringCells(cur.getCoords());
 
                 for (CellNode child: children) {
                     int tmp = cellPresent(close, child);
@@ -129,8 +131,10 @@ public class PathFinding {
                 }
             }
         }
-        
-        cur = close.getLast();
+
+        if (! Arrays.equals(cur.getCoords(), dest))
+            System.exit(1);
+
         while (! Arrays.equals(cur.getCoords(), start)) {
             res.addCell(cur);
             cur = cur.getParent();
