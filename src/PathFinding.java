@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 
@@ -134,6 +135,11 @@ public class PathFinding {
 
         if (! Arrays.equals(cur.getCoords(), dest)) {
             System.out.println("Error finding path from [" + start[0] + "," + start[1] + "] to [" + dest[0] + "," + dest[1] + "]");
+            try {
+                TimeUnit.MILLISECONDS.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
             System.exit(1);
         }
 

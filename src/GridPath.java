@@ -1,11 +1,9 @@
 import java.util.LinkedList;
 
 public class GridPath {
-    private int distance;
     private LinkedList<CellNode> path;
 
     public GridPath() {
-        distance = 0;
         path = new LinkedList<CellNode>();
     }
     
@@ -22,7 +20,6 @@ public class GridPath {
 
     public void addCell(CellNode cell) {
         path.addFirst(cell);
-        computeDistance();
     }
 
 
@@ -35,10 +32,6 @@ public class GridPath {
     }
 
     public int getDistance() {
-        return distance;
-    }
-
-    private void computeDistance() {
-        distance = path.size() - 1;
+        return path.size() - 1;
     }
 }

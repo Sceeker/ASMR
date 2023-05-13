@@ -33,12 +33,14 @@ public class INS extends GridTurtlebot {
     }
 
     private void manageOrder() {
-        follow = true;
+        if (state != INSState.waiting) {
+            follow = true;
 
-        ArrayList<Integer> trans = new ArrayList<Integer>();
-        trans.add(orderOnHold[0]);
-        trans.add(orderOnHold[1]);
-        restaurant.getAir().radioTransmission(new RadioData(this, 5, trans));
+            ArrayList<Integer> trans = new ArrayList<Integer>();
+            trans.add(orderOnHold[0]);
+            trans.add(orderOnHold[1]);
+            restaurant.getAir().radioTransmission(new RadioData(this, 5, trans));
+        }
     }
 
     private void registerOrder() {
@@ -50,13 +52,15 @@ public class INS extends GridTurtlebot {
 
         Timer timer = new Timer();
         
-        timer.schedule(task, 1000);
+        timer.schedule(task, 20);
     }
 
     private void cancelOrder() {
         if (orderOnHold != null) {
             state = INSState.waiting;
+            follow = false;
             orderOnHold = null;
+            curPath = null;
         }
     }
 
@@ -67,6 +71,16 @@ public class INS extends GridTurtlebot {
         }
 
         return null;
+    }
+
+    private void transmitDistance() {
+        if (state == INSState.taking) {
+            ArrayList<Integer> trans = new ArrayList<Integer>();
+            trans.add(curPath.getDistance());
+            trans.add(orderOnHold[0]);
+            trans.add(orderOnHold[1]);
+            restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
+        }
     }
 
     public void radioReception(RadioData dat) {
@@ -82,11 +96,15 @@ public class INS extends GridTurtlebot {
                     PathFinding solver = new PathFinding(restaurant);
                     curPath = solver.findPath(getLocation(), new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
 
-                    ArrayList<Integer> trans = new ArrayList<Integer>();
-                    trans.add(curPath.getDistance());
-                    trans.add(orderOnHold[0]);
-                    trans.add(orderOnHold[1]);
-                    restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
+                    TimerTask task = new TimerTask() {
+                        public void run() {
+                            transmitDistance();
+                        }
+                    };
+            
+                    Timer timer = new Timer();
+                    
+                    timer.schedule(task, 10);
                 }
                 break;
 

@@ -14,7 +14,7 @@ public class Main {
 		IniFile configFile;
 		
 		try {
-			configFile = new IniFile(args[0]);
+			configFile = new IniFile("configuration.ini");
 		} catch (Exception e) {
 			System.out.print(e.getMessage());
 			return;
@@ -32,7 +32,7 @@ public class Main {
             ColorCell.defaultcolor[2] = sp.colorunknown.getBlue();
         }
 
-        Path path = Paths.get(args[1]);
+        Path path = Paths.get("restaurant.txt");
         List<String> file = Files.readAllLines(path);
 
         int width = Integer.parseInt(file.remove(0));
