@@ -104,8 +104,7 @@ public class Customer {
         }
 
         if (gogogo) {
-            restaurant.getEnv().moveComponent(pos, next, 5);
-
+            restaurant.getEnv().moveComponent(pos , next, 5);
             restaurant.getEnv().addComponent(pos, 0, restaurant.typeColor(0));
 
             pos = next;

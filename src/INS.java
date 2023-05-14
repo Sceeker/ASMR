@@ -275,7 +275,6 @@ public class INS extends GridTurtlebot {
     
             restaurant.getEnv().moveComponent(cur, next, 6);
             restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
-            restaurant.getEnv().getEnvironment().changeCell(cur[0], cur[1], 0);
         } else {
             computePath(curPath.coordsArray()[curPath.coordsArray().length - 1]);
         }
