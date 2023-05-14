@@ -207,13 +207,13 @@ public class Restaurant extends SimFactory {
     public void schedule() {
         for (int i = 0; i < 1000; i++) {
             if (! customers.isEmpty()) {
-                ArrayList<Integer> toRemove = new ArrayList<Integer>();
+                ArrayList<Customer> toRemove = new ArrayList<Customer>();
                 for (Customer customer: customers) {
                     if (customer.move())
-                        toRemove.add(customers.indexOf(customer));
+                        toRemove.add(customer);
                 }
 
-                for (int idx: toRemove) {
+                for (Customer idx: toRemove) {
                     customers.remove(idx);
                 }
             }

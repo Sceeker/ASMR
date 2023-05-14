@@ -258,19 +258,7 @@ public class INS extends GridTurtlebot {
 
         int[] next = curPath.coordsArray()[pathStep];
 
-        PathFinding solver = new PathFinding(restaurant);
-        ArrayList<int[]> free = solver.freeNeighboringCoords(cur);
-
-        boolean gogogo = false;
-
-        for (int[] coord: free) {
-            if (Arrays.equals(coord, next)) {
-                gogogo = true;
-                break;
-            }
-        }
-
-        if (gogogo) {  
+        if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 0) {  
             setLocation(next);
     
             restaurant.getEnv().moveComponent(cur, next, 6);

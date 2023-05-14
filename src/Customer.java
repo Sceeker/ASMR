@@ -17,6 +17,7 @@ public class Customer {
         curPath = null;
         pathStep = 1;
         this.pos = pos;
+        this.leaving = false;
     }
 
     public Customer(int[] pos, Restaurant restaurant, boolean leaving) {
@@ -65,7 +66,6 @@ public class Customer {
                 computePath();
             } else {
                 for (Table table: restaurant.getTables()) {
-                    table = restaurant.getTables().get(13);
                     if (! table.isTaken()) {
                         goal = table.takeTable(pos);
                         
@@ -91,19 +91,7 @@ public class Customer {
     public void followPath() {
         int[] next = curPath.coordsArray()[pathStep];
 
-        PathFinding solver = new PathFinding(restaurant);
-        ArrayList<int[]> free = solver.freeNeighboringCoords(pos);
-
-        boolean gogogo = false;
-
-        for (int[] coord: free) {
-            if (Arrays.equals(coord, next)) {
-                gogogo = true;
-                break;
-            }
-        }
-
-        if (gogogo) {
+        if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 0) {
             restaurant.getEnv().moveComponent(pos , next, 5);
             restaurant.getEnv().addComponent(pos, 0, restaurant.typeColor(0));
 
