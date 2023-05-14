@@ -3,7 +3,6 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
@@ -22,6 +21,7 @@ public class INS extends GridTurtlebot {
     private int pathStep;
     private boolean follow;
     private INSState state;
+    private boolean recompute;
 
     public INS(int id, String name, int field, int debug, int[] pos, int r, int c, Restaurant restaurant) {
         super(id, name, field, debug, pos, r, c);
@@ -29,6 +29,7 @@ public class INS extends GridTurtlebot {
         this.restaurant = restaurant;
         orderOnHold = null;
         state = INSState.waiting;
+        recompute = false;
         pathStep = 0;
     }
 
@@ -56,7 +57,7 @@ public class INS extends GridTurtlebot {
     }
 
     private void cancelOrder() {
-        if (orderOnHold != null) {
+        if (state != INSState.waiting) {
             state = INSState.waiting;
             follow = false;
             orderOnHold = null;
@@ -73,14 +74,22 @@ public class INS extends GridTurtlebot {
         return null;
     }
 
-    private void transmitDistance() {
-        if (state == INSState.taking) {
-            ArrayList<Integer> trans = new ArrayList<Integer>();
-            trans.add(curPath.getDistance());
-            trans.add(orderOnHold[0]);
-            trans.add(orderOnHold[1]);
-            restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
-        }
+    private void transmitDistance(INS bot) {
+        TimerTask task = new TimerTask() {
+            public void run() {
+                if (state != INSState.waiting) {
+                    ArrayList<Integer> trans = new ArrayList<Integer>();
+                    trans.add(curPath.getDistance());
+                    trans.add(orderOnHold[0]);
+                    trans.add(orderOnHold[1]);
+                    restaurant.getAir().radioTransmission(new RadioData(bot, 1, trans));
+                }
+            }
+        };
+
+        Timer timer = new Timer();
+        
+        timer.schedule(task, 10);
     }
 
     public void radioReception(RadioData dat) {
@@ -93,24 +102,16 @@ public class INS extends GridTurtlebot {
                     state = INSState.taking;
                     registerOrder();
 
-                    PathFinding solver = new PathFinding(restaurant);
-                    curPath = solver.findPath(getLocation(), new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
+                    computePath(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
 
-                    TimerTask task = new TimerTask() {
-                        public void run() {
-                            transmitDistance();
-                        }
-                    };
-            
-                    Timer timer = new Timer();
-                    
-                    timer.schedule(task, 10);
+                    transmitDistance(this);
                 }
                 break;
 
-            case 1:     // Distance d'un autre INS
-                if (state == INSState.taking && Arrays.equals(orderOnHold, new int[] {dat.getCommandData().get(1), dat.getCommandData().get(2)}) && curPath.getDistance() > dat.getCommandData().get(0)) {
-                    cancelOrder();
+            case 1:    // Distance d'un autre INS
+                if (state != INSState.waiting && Arrays.equals(orderOnHold, new int[] {dat.getCommandData().get(1), dat.getCommandData().get(2)})) {
+                    if (curPath.getDistance() >= dat.getCommandData().get(0))
+                        cancelOrder();
                 }
                 break;
 
@@ -120,27 +121,71 @@ public class INS extends GridTurtlebot {
                     state = INSState.picking;
                     registerOrder();
 
-                    PathFinding solver = new PathFinding(restaurant);
                     Random rng = new Random();
-                    curPath = solver.findPath(getLocation(), restaurant.getCollectPoints().get(rng.nextInt(restaurant.getCollectPoints().size())));
+                    computePath(restaurant.getCollectPoints().get(rng.nextInt(restaurant.getCollectPoints().size())));
 
-                    ArrayList<Integer> trans = new ArrayList<Integer>();
-                    trans.add(curPath.getDistance());
-                    trans.add(orderOnHold[0]);
-                    trans.add(orderOnHold[1]);
-                    restaurant.getAir().radioTransmission(new RadioData(this, 4, trans));
+                    transmitDistance(this);
                 }
                 break;
 
-            case 4:
-                if (state == INSState.taking && Arrays.equals(orderOnHold, new int[] {dat.getCommandData().get(1), dat.getCommandData().get(2)}) && curPath.getDistance() > dat.getCommandData().get(0)) {
-                    cancelOrder();
+            case 6:
+                if (state == INSState.waiting) {
+                    PathFinding solver = new PathFinding(restaurant);
+                    ArrayList<int[]> free = solver.neighboringCoords(getLocation());
+                    free.add(getLocation());
+                    int[] check = new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)};
+
+                    boolean move = false;
+
+                    for (int[] coords: free) {
+                        if (Arrays.equals(coords, check)) {
+                            move = true;
+                            break;
+                        }
+                    }
+
+                    if (move) {
+                        free = solver.freeNeighboringCoords(getLocation());
+
+                        curPath = new GridPath();
+                        curPath.addCoords(getLocation());
+                        curPath.addCoords(free.get(0));
+                        pathStep = 0;
+                        follow = true;
+                    }
                 }
                 break;
 
             default :
                 break;
         }
+    }
+
+    private void computePath(int[] dest) {
+        PathFinding solver = new PathFinding(restaurant);
+
+        ArrayList<Integer> trans = new ArrayList<Integer>();
+        if (solver.freeNeighboringCoords(getLocation()).isEmpty()) {
+            trans.add(getLocation()[0]);
+            trans.add(getLocation()[1]);
+        } else if (solver.freeNeighboringCoords(dest).isEmpty() || restaurant.getEnv().getEnvironment().getCellContent(dest[0], dest[1]) != 0) {
+            trans.add(dest[0]);
+            trans.add(dest[1]);
+        }
+        
+        if (! trans.isEmpty()) {
+            follow = false;
+            recompute = true;
+
+            restaurant.getAir().radioTransmission(new RadioData(this, 6, trans));
+
+            return;
+        }
+
+        curPath = solver.findPath(getLocation(), dest);
+        pathStep = 0;
+        if (state == INSState.waiting)
+            follow = true;
     }
 
     @Override
@@ -154,18 +199,9 @@ public class INS extends GridTurtlebot {
                     case picking:
                         System.out.println("[INS] Order picked up");
                         state = INSState.delivering;
-
-                        PathFinding solver = new PathFinding(restaurant);
+                        
                         int[] tablepos = getTable().findAccessor(getLocation());
-                        while (tablepos == null) {
-                            try {
-                                TimeUnit.MILLISECONDS.sleep(50);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                            tablepos = getTable().findAccessor(getLocation());
-                        }
-                        curPath = solver.findPath(getLocation(), tablepos); 
+                        computePath(tablepos);
                         break;
 
                     case delivering:
@@ -177,7 +213,7 @@ public class INS extends GridTurtlebot {
                         curPath = null;
                         break;
 
-                    default:
+                    case taking:
                         System.out.println("[INS] Order taken");
                         getTable().changeTableState(TableState.waitingForOrder);
 
@@ -190,10 +226,28 @@ public class INS extends GridTurtlebot {
                         orderOnHold = null;
                         curPath = null;
                         break;
+
+                    default:
+                        state = INSState.waiting;
+                        follow = false;
+                        curPath = null;
+                        break;    
                 }
 
                 pathStep = 0;
             }
+        } else if (recompute) {
+            recompute = false;
+
+            if (state == INSState.delivering) {
+                int[] tablepos = getTable().findAccessor(getLocation());
+                computePath(tablepos);
+            } else {
+                computePath(orderOnHold);
+            }
+
+            if (! recompute)
+                follow = true;
         }
     }
 
@@ -204,12 +258,26 @@ public class INS extends GridTurtlebot {
 
         int[] next = curPath.coordsArray()[pathStep];
 
-        restaurant.getEnv().moveComponent(getLocation(), next, 6);
+        PathFinding solver = new PathFinding(restaurant);
+        ArrayList<int[]> free = solver.freeNeighboringCoords(cur);
 
-        restaurant.getEnv().addComponent(getLocation(), 0, restaurant.typeColor(0));
+        boolean gogogo = false;
 
-        setLocation(next);
+        for (int[] coord: free) {
+            if (Arrays.equals(coord, next)) {
+                gogogo = true;
+                break;
+            }
+        }
 
-        restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
+        if (gogogo) {  
+            setLocation(next);
+    
+            restaurant.getEnv().moveComponent(cur, next, 6);
+            restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
+            restaurant.getEnv().getEnvironment().changeCell(cur[0], cur[1], 0);
+        } else {
+            computePath(curPath.coordsArray()[curPath.coordsArray().length - 1]);
+        }
     }
 }

@@ -1,10 +1,7 @@
-import static org.junit.Assert.fail;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import fr.emse.fayol.maqit.simulator.environment.ColorCell;
 
@@ -62,6 +59,129 @@ public class PathFinding {
         return res;
     }
 
+    public ArrayList<CellNode> neighboringCells(int[] coords) {
+        int x = coords[1];
+        int y = coords[0];
+        ArrayList<CellNode> res = new ArrayList<CellNode>();
+
+        int cx = 0;
+        int cy = 0;
+
+        for (int i = 0; i < 4; i++) {
+            switch (i) {
+                case 0:
+                    cx = x + 1;
+                    cy = y;
+                    break;
+
+                case 1:
+                    cx = x;
+                    cy = y - 1;
+                    break;
+
+                case 2:
+                    cx = x;
+                    cy = y + 1;
+                    break;
+
+                default:
+                    cx = x - 1;
+                    cy = y;
+                    break;
+            }
+    
+            if (restaurant.getEnv().validPosition(cy, cx)) {
+                int content = restaurant.getEnv().getEnvironment().getCellContent(cy, cx);
+                CellNode cur = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[]{cy, cx}, null);
+
+                res.add(cur);
+            }
+        }
+
+        return res;
+    }
+
+    public ArrayList<int[]> freeNeighboringCoords(int[] coords) {
+        int x = coords[1];
+        int y = coords[0];
+        ArrayList<int[]> res = new ArrayList<int[]>();
+
+        int cx = 0;
+        int cy = 0;
+
+        for (int i = 0; i < 4; i++) {
+            switch (i) {
+                case 0:
+                    cx = x + 1;
+                    cy = y;
+                    break;
+
+                case 1:
+                    cx = x;
+                    cy = y - 1;
+                    break;
+
+                case 2:
+                    cx = x;
+                    cy = y + 1;
+                    break;
+
+                default:
+                    cx = x - 1;
+                    cy = y;
+                    break;
+            }
+    
+            if (restaurant.getEnv().validPosition(cy, cx)) {
+                int content = restaurant.getEnv().getEnvironment().getCellContent(cy, cx);
+
+                if (content == 0)
+                    res.add(new int[] {cy, cx});
+            }
+        }
+
+        return res;
+    }
+
+    public ArrayList<int[]> neighboringCoords(int[] coords) {
+        int x = coords[1];
+        int y = coords[0];
+        ArrayList<int[]> res = new ArrayList<int[]>();
+
+        int cx = 0;
+        int cy = 0;
+
+        for (int i = 0; i < 4; i++) {
+            switch (i) {
+                case 0:
+                    cx = x + 1;
+                    cy = y;
+                    break;
+
+                case 1:
+                    cx = x;
+                    cy = y - 1;
+                    break;
+
+                case 2:
+                    cx = x;
+                    cy = y + 1;
+                    break;
+
+                default:
+                    cx = x - 1;
+                    cy = y;
+                    break;
+            }
+    
+            if (restaurant.getEnv().validPosition(cy, cx)) {
+                res.add(new int[] {cy, cx});
+            }
+        }
+
+        return res;
+    }
+
     private CellNode chooseCell(ArrayList<CellNode> cells) {
         int minf = Integer.MAX_VALUE;
         CellNode res = cells.get(0);
@@ -88,9 +208,15 @@ public class PathFinding {
     }
 
     public GridPath findPath(int[] start, int[] dest) {
+        return findPath(start, dest, 1000);
+    }
+
+    public GridPath findPath(int[] start, int[] dest, int maxSteps) {
         ArrayList<CellNode> open = new ArrayList<CellNode>();
         LinkedList<CellNode> close = new LinkedList<CellNode>();
         GridPath res = new GridPath();
+
+        int i = 0;
 
         int content = restaurant.getEnv().getEnvironment().getCellContent(start[0], start[1]);
         CellNode cur = new CellNode(new ColorCell(content, restaurant.typeColor(content)), new int[] {start[0], start[1]}, null);
@@ -102,7 +228,7 @@ public class PathFinding {
         while (! open.isEmpty()) {
             cur = chooseCell(open);
 
-            if (Arrays.equals(cur.getCoords(), dest)) {
+            if (Arrays.equals(cur.getCoords(), dest) || i > maxSteps) {
                 res.addCell(cur);
                 break;
             } else {
@@ -131,16 +257,12 @@ public class PathFinding {
                     }
                 }
             }
+
+            i++;
         }
 
         if (! Arrays.equals(cur.getCoords(), dest)) {
-            System.out.println("Error finding path from [" + start[0] + "," + start[1] + "] to [" + dest[0] + "," + dest[1] + "]");
-            try {
-                TimeUnit.MILLISECONDS.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-            System.exit(1);
+            return null;
         }
 
         while (! Arrays.equals(cur.getCoords(), start)) {

@@ -1,5 +1,7 @@
 import java.util.LinkedList;
 
+import fr.emse.fayol.maqit.simulator.environment.ColorCell;
+
 public class GridPath {
     private LinkedList<CellNode> path;
 
@@ -16,6 +18,10 @@ public class GridPath {
         }
 
         return res;
+    }
+
+    public void addCoords(int[] coords) {
+        path.add(new CellNode(new ColorCell(0, new int[] {0, 0, 0}), coords, null));
     }
 
     public void addCell(CellNode cell) {

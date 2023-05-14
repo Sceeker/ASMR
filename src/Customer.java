@@ -24,6 +24,11 @@ public class Customer {
         this.leaving = leaving;
     }
 
+    private void computePath() {
+        PathFinding solver = new PathFinding(restaurant);
+        curPath = solver.findPath(new int[] {pos[0], pos[1]}, goal);
+    }
+
     public boolean move() {
         if (curPath != null) {
             int[] goal = curPath.getPath().getLast().getCoords();
@@ -57,18 +62,20 @@ public class Customer {
                     }
                 }
 
-                PathFinding solver = new PathFinding(restaurant);
-                curPath = solver.findPath(new int[] {pos[0], pos[1]}, goal);
+                computePath();
             } else {
                 for (Table table: restaurant.getTables()) {
+                    table = restaurant.getTables().get(13);
                     if (! table.isTaken()) {
                         goal = table.takeTable(pos);
-                        goalTable = table;
+                        
+                        if (! (goal == null)) {
+                            goalTable = table;
     
-                        PathFinding solver = new PathFinding(restaurant);
-                        curPath = solver.findPath(new int[] {pos[0], pos[1]}, goal);
-    
-                        break;
+                            computePath();
+        
+                            break;
+                        }
                     }
                 }
             }
@@ -84,12 +91,26 @@ public class Customer {
     public void followPath() {
         int[] next = curPath.coordsArray()[pathStep];
 
-        restaurant.getEnv().moveComponent(pos, next, 5);
+        PathFinding solver = new PathFinding(restaurant);
+        ArrayList<int[]> free = solver.freeNeighboringCoords(pos);
 
-        restaurant.getEnv().addComponent(pos, 0, restaurant.typeColor(0));
+        boolean gogogo = false;
 
-        pos = next;
+        for (int[] coord: free) {
+            if (Arrays.equals(coord, next)) {
+                gogogo = true;
+                break;
+            }
+        }
 
-        pathStep++;
+        if (gogogo) {
+            restaurant.getEnv().moveComponent(pos, next, 5);
+
+            restaurant.getEnv().addComponent(pos, 0, restaurant.typeColor(0));
+
+            pos = next;
+
+            pathStep++;
+        }
     }
 }

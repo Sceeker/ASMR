@@ -43,8 +43,14 @@ public class Table {
         ArrayList<CellNode> accessors = new ArrayList<CellNode>();
         accessors = solver.freeNeighboringCells(coords);
 
-        if (accessors.size() == 0)
-            return null;
+        if (accessors.size() == 0) {
+            accessors = solver.neighboringCells(coords);
+
+            for (CellNode accessor: accessors) {
+                if (accessor.getCell().getColor() == restaurant.typeColor(5) || accessor.getCell().getColor() == restaurant.typeColor(6))
+                    return accessor.getCoords();
+            }
+        }
 
         int minDist = Integer.MAX_VALUE;
         CellNode res = accessors.get(0);

@@ -11,6 +11,7 @@ public class Restaurant extends SimFactory {
     private Airwaves air;
     private List<String> file;
     private int height, width;
+    private int timeStep;
     private Kitchen kitchen;
     private ArrayList<Customer> customers;
     private ArrayList<Table> tables;
@@ -71,10 +72,11 @@ public class Restaurant extends SimFactory {
         return col;
     }
 
-    public Restaurant(SimProperties sp, OpenGridManagement env, List<String> file) {
+    public Restaurant(SimProperties sp, OpenGridManagement env, List<String> file, int timeStep) {
         super(sp, env);     
 
         this.file = file;
+        this.timeStep = timeStep;
 
         customers = new ArrayList<Customer>();
         tables = new ArrayList<Table>();
@@ -124,6 +126,10 @@ public class Restaurant extends SimFactory {
 
     public ArrayList<Customer> getCustomers() {
         return customers;
+    }
+
+    public int getTimeStep() {
+        return timeStep;
     }
 
     private ArrayList<int[]> createAccessors(ArrayList<int[]> lst) {
@@ -210,7 +216,8 @@ public class Restaurant extends SimFactory {
                 for (int idx: toRemove) {
                     customers.remove(idx);
                 }
-            } else if (i % 50 == 0) {
+            }
+            if (i % 50 == 0) {
                 Random rng = new Random();
                 int[] entry = doors.get(rng.nextInt(doors.size()));
                 customers.add(new Customer(entry, this));
@@ -223,7 +230,7 @@ public class Restaurant extends SimFactory {
     
             System.out.println("Step " + i);
             try {
-                TimeUnit.MILLISECONDS.sleep(50);
+                TimeUnit.MILLISECONDS.sleep(200);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
