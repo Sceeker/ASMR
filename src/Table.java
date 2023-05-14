@@ -80,7 +80,7 @@ public class Table {
 
         Timer timer = new Timer();
         
-        timer.schedule(task, 5000);
+        timer.schedule(task, restaurant.getTimeStep() * 30);
     }
 
     public void radioReception(RadioData dat) {
@@ -106,7 +106,7 @@ public class Table {
 
         Timer timer = new Timer();
         
-        timer.schedule(task, 2000);
+        timer.schedule(task, restaurant.getTimeStep() * 20);
     }
 
     public void sit(RadioData dat) {

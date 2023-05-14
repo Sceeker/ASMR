@@ -16,7 +16,5 @@ public class Airwaves {
         }
 
         restaurant.getKitchen().radioReception(dat);
-        
-        System.out.println("[RADIO] Command " + dat.getCommandId());
     }
 }

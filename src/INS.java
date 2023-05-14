@@ -53,7 +53,7 @@ public class INS extends GridTurtlebot {
 
         Timer timer = new Timer();
         
-        timer.schedule(task, 20);
+        timer.schedule(task, restaurant.getTimeStep() * 2 / 10);
     }
 
     private void cancelOrder() {
@@ -89,7 +89,7 @@ public class INS extends GridTurtlebot {
 
         Timer timer = new Timer();
         
-        timer.schedule(task, 10);
+        timer.schedule(task, restaurant.getTimeStep() / 10);
     }
 
     public void radioReception(RadioData dat) {
@@ -197,7 +197,6 @@ public class INS extends GridTurtlebot {
             if (Arrays.equals(curPath.coordsArray()[curPath.coordsArray().length - 1], getLocation())) {
                 switch (state) {
                     case picking:
-                        System.out.println("[INS] Order picked up");
                         state = INSState.delivering;
                         
                         int[] tablepos = getTable().findAccessor(getLocation());
@@ -205,7 +204,6 @@ public class INS extends GridTurtlebot {
                         break;
 
                     case delivering:
-                        System.out.println("[INS] Order delivered");
                         getTable().changeTableState(TableState.occupied);
                         state = INSState.waiting;
                         follow = false;
@@ -214,7 +212,6 @@ public class INS extends GridTurtlebot {
                         break;
 
                     case taking:
-                        System.out.println("[INS] Order taken");
                         getTable().changeTableState(TableState.waitingForOrder);
 
                         ArrayList<Integer> trans = new ArrayList<Integer>();

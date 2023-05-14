@@ -98,6 +98,9 @@ public class Customer {
             pos = next;
 
             pathStep++;
+        } else if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 5) {
+            computePath();
+            pathStep = 0;
         }
     }
 }

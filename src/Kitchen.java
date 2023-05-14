@@ -51,7 +51,7 @@ public class Kitchen {
             case 2:     // Une commande est reçue
                 Timer timer = new Timer();
                 CookingTimerTask torder = new CookingTimerTask(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)}, restaurant);
-                timer.schedule(torder, 4000, 2000);
+                timer.schedule(torder, restaurant.getTimeStep() * 20, restaurant.getTimeStep() * 10);
                 orders.add(new OrderWrapper(timer, torder));
                 break;
 

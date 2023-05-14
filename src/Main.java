@@ -41,7 +41,7 @@ public class Main {
         Random rng = new Random();
         OpenGridManagement env = new OpenGridManagement(rng.nextInt(), height, width, sp.display_title, sp.display_x, sp.display_y, height * 32,  width * 32, 0);
 
-        Restaurant asmr = new Restaurant(sp, env, file, 200);
+        Restaurant asmr = new Restaurant(sp, env, file, 100);
 
         asmr.schedule();
     }

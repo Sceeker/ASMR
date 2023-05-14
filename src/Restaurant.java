@@ -230,7 +230,7 @@ public class Restaurant extends SimFactory {
     
             System.out.println("Step " + i);
             try {
-                TimeUnit.MILLISECONDS.sleep(200);
+                TimeUnit.MILLISECONDS.sleep(timeStep);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
