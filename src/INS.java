@@ -3,8 +3,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
-import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
+import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 
 enum INSState {
     waiting,
@@ -30,7 +30,7 @@ public class INS extends GridTurtlebot {
         orderOnHold = null;
         state = INSState.waiting;
         recompute = false;
-        pathStep = 0;
+        pathStep = 1;
         dists = new ArrayList<Integer>();
     }
 
@@ -105,7 +105,8 @@ public class INS extends GridTurtlebot {
 
                     computePath(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
 
-                    transmitDistance();
+                    if (curPath != null)
+                        transmitDistance();
                 } else {
                     ArrayList<Integer> trans = new ArrayList<Integer>();
                     trans.add(Integer.MAX_VALUE);
@@ -132,7 +133,8 @@ public class INS extends GridTurtlebot {
                     Random rng = new Random();
                     computePath(restaurant.getCollectPoints().get(rng.nextInt(restaurant.getCollectPoints().size())));
 
-                    transmitDistance();
+                    if (curPath != null)
+                        transmitDistance();
                 } else {
                     ArrayList<Integer> trans = new ArrayList<Integer>();
                     trans.add(Integer.MAX_VALUE);
@@ -164,7 +166,7 @@ public class INS extends GridTurtlebot {
                         curPath = new GridPath();
                         curPath.addCoords(getLocation());
                         curPath.addCoords(free.get(0));
-                        pathStep = 0;
+                        pathStep = 1;
                         follow = true;
                     }
                 }
@@ -197,9 +199,12 @@ public class INS extends GridTurtlebot {
         }
 
         curPath = solver.findPath(getLocation(), dest);
-        pathStep = 0;
+        pathStep = 1;
         if (state == INSState.waiting)
             follow = true;
+
+        if (recompute)
+            transmitDistance();
     }
 
     @Override
@@ -245,7 +250,7 @@ public class INS extends GridTurtlebot {
                         break;    
                 }
 
-                pathStep = 0;
+                pathStep = 1;
             }
         } else if (recompute) {
             recompute = false;
@@ -263,7 +268,7 @@ public class INS extends GridTurtlebot {
     }
 
     public void followPath() {
-        int[] cur = curPath.coordsArray()[pathStep];
+        int[] cur = getLocation();
 
         pathStep++;
 
@@ -272,8 +277,9 @@ public class INS extends GridTurtlebot {
         if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 0) {  
             setLocation(next);
 
-            restaurant.getEnv().moveComponent(cur, next, 6);
-            restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
+
+                ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(next[0], next[1], 6, restaurant.typeColor(6));
+                ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(cur[0], cur[1], 0, restaurant.typeColor(0));
         } else {
             Random rng = new Random();
             if (rng.nextBoolean())
