@@ -15,7 +15,7 @@ public class Customer {
     public Customer(int[] pos, Restaurant restaurant) {
         this.restaurant = restaurant;
         curPath = null;
-        pathStep = 1;
+        pathStep = 0;
         this.pos = pos;
         this.leaving = false;
     }
@@ -28,6 +28,7 @@ public class Customer {
     private void computePath() {
         PathFinding solver = new PathFinding(restaurant);
         curPath = solver.findPath(new int[] {pos[0], pos[1]}, goal);
+        pathStep = 1;
     }
 
     public boolean move() {
@@ -100,7 +101,6 @@ public class Customer {
             pathStep++;
         } else if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 5) {
             computePath();
-            pathStep = 0;
         }
     }
 }

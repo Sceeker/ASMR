@@ -1,3 +1,5 @@
+import java.util.concurrent.Executors;
+
 public class Airwaves {
     private Restaurant restaurant;
 
@@ -8,7 +10,11 @@ public class Airwaves {
     public void radioTransmission(RadioData dat) {
         for (INS bot : restaurant.getBots()) {
             if (dat.getOrigin() != bot)
-                bot.radioReception(dat);
+                Executors.newSingleThreadExecutor().execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        bot.radioReception(dat);
+                    }});
         }
 
         for (Table table: restaurant.getTables()) {
@@ -16,5 +22,7 @@ public class Airwaves {
         }
 
         restaurant.getKitchen().radioReception(dat);
+
+        System.out.println("[RADIO] Command " + dat.getCommandId());
     }
 }

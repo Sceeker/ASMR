@@ -1,8 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
@@ -22,6 +20,7 @@ public class INS extends GridTurtlebot {
     private boolean follow;
     private INSState state;
     private boolean recompute;
+    private ArrayList<Integer> dists;
 
     public INS(int id, String name, int field, int debug, int[] pos, int r, int c, Restaurant restaurant) {
         super(id, name, field, debug, pos, r, c);
@@ -31,11 +30,13 @@ public class INS extends GridTurtlebot {
         state = INSState.waiting;
         recompute = false;
         pathStep = 0;
+        dists = new ArrayList<Integer>();
     }
 
     private void manageOrder() {
         if (state != INSState.waiting) {
             follow = true;
+            dists.clear();
 
             ArrayList<Integer> trans = new ArrayList<Integer>();
             trans.add(orderOnHold[0]);
@@ -44,24 +45,13 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    private void registerOrder() {
-        TimerTask task = new TimerTask() {
-            public void run() {
-                manageOrder();
-            }
-        };
-
-        Timer timer = new Timer();
-        
-        timer.schedule(task, restaurant.getTimeStep() * 2 / 10);
-    }
-
     private void cancelOrder() {
         if (state != INSState.waiting) {
             state = INSState.waiting;
             follow = false;
             orderOnHold = null;
             curPath = null;
+            dists.clear();
         }
     }
 
@@ -74,22 +64,33 @@ public class INS extends GridTurtlebot {
         return null;
     }
 
-    private void transmitDistance(INS bot) {
-        TimerTask task = new TimerTask() {
-            public void run() {
-                if (state != INSState.waiting) {
-                    ArrayList<Integer> trans = new ArrayList<Integer>();
-                    trans.add(curPath.getDistance());
-                    trans.add(orderOnHold[0]);
-                    trans.add(orderOnHold[1]);
-                    restaurant.getAir().radioTransmission(new RadioData(bot, 1, trans));
-                }
-            }
-        };
+    private void transmitDistance() {
+        if (state != INSState.waiting) {
+            ArrayList<Integer> trans = new ArrayList<Integer>();
+            trans.add(curPath.getDistance());
+            trans.add(orderOnHold[0]);
+            trans.add(orderOnHold[1]);
+            restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
+        }
 
-        Timer timer = new Timer();
-        
-        timer.schedule(task, restaurant.getTimeStep() / 10);
+        if (state == INSState.taking || state == INSState.picking) {
+            if (dists.size() == restaurant.getBots().size() - 1)
+                comparateurDeDistanceSuperSympa();
+        }
+    }
+
+    private void comparateurDeDistanceSuperSympa() {
+        if (curPath == null)
+            return;
+
+        for (int dist: dists) {
+            if (curPath.getDistance() >= dist) {
+                cancelOrder();
+                return;
+            }
+        }
+
+        manageOrder();
     }
 
     public void radioReception(RadioData dat) {
@@ -100,18 +101,25 @@ public class INS extends GridTurtlebot {
                 if (state == INSState.waiting) {
                     orderOnHold = new int[] {dat.getCommandData().get(2), dat.getCommandData().get(3)};
                     state = INSState.taking;
-                    registerOrder();
 
                     computePath(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)});
 
-                    transmitDistance(this);
+                    transmitDistance();
+                } else {
+                    ArrayList<Integer> trans = new ArrayList<Integer>();
+                    trans.add(Integer.MAX_VALUE);
+                    trans.add(dat.getCommandData().get(2));
+                    trans.add(dat.getCommandData().get(3));
+                    restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
                 }
                 break;
 
             case 1:    // Distance d'un autre INS
                 if (state != INSState.waiting && Arrays.equals(orderOnHold, new int[] {dat.getCommandData().get(1), dat.getCommandData().get(2)})) {
-                    if (curPath.getDistance() >= dat.getCommandData().get(0))
-                        cancelOrder();
+                    dists.add(dat.getCommandData().get(0));
+
+                    if (dists.size() == restaurant.getBots().size() - 1)
+                        comparateurDeDistanceSuperSympa();
                 }
                 break;
 
@@ -119,12 +127,17 @@ public class INS extends GridTurtlebot {
                 if (state == INSState.waiting) {
                     orderOnHold = new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)};
                     state = INSState.picking;
-                    registerOrder();
 
                     Random rng = new Random();
                     computePath(restaurant.getCollectPoints().get(rng.nextInt(restaurant.getCollectPoints().size())));
 
-                    transmitDistance(this);
+                    transmitDistance();
+                } else {
+                    ArrayList<Integer> trans = new ArrayList<Integer>();
+                    trans.add(Integer.MAX_VALUE);
+                    trans.add(dat.getCommandData().get(0));
+                    trans.add(dat.getCommandData().get(1));
+                    restaurant.getAir().radioTransmission(new RadioData(this, 1, trans));
                 }
                 break;
 

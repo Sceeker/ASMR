@@ -217,7 +217,7 @@ public class Restaurant extends SimFactory {
                     customers.remove(idx);
                 }
             }
-            if (i % 50 == 0) {
+            if (i % 40 == 0) {
                 Random rng = new Random();
                 int[] entry = doors.get(rng.nextInt(doors.size()));
                 customers.add(new Customer(entry, this));
