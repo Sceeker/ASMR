@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 
 import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 
@@ -99,8 +100,10 @@ public class Customer {
             pos = next;
 
             pathStep++;
-        } else if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 5) {
-            computePath();
+        } else {
+            Random rng = new Random();
+            if (rng.nextBoolean())
+                computePath();
         }
     }
 }

@@ -4,6 +4,7 @@ import java.util.Random;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
+import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 
 enum INSState {
     waiting,
@@ -270,11 +271,13 @@ public class INS extends GridTurtlebot {
 
         if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 0) {  
             setLocation(next);
-    
+
             restaurant.getEnv().moveComponent(cur, next, 6);
             restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
         } else {
-            computePath(curPath.coordsArray()[curPath.coordsArray().length - 1]);
+            Random rng = new Random();
+            if (rng.nextBoolean())
+                computePath(curPath.coordsArray()[curPath.coordsArray().length - 1]);
         }
     }
 }
