@@ -40,7 +40,6 @@ public class Customer {
                 restaurant.getEnv().moveComponent(pos, pos, 0);
 
                 if (! leaving) {
-                    goalTable.changeTableState(TableState.waitingToOrder);
                     ArrayList<Integer> trans = new ArrayList<Integer>();
                     trans.add(goal[0]);
                     trans.add(goal[1]);

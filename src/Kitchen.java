@@ -1,23 +1,29 @@
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 
-class CookingTimerTask extends TimerTask  {
+class KitchenOrder {
     private int[] tableLocation;
     private Restaurant restaurant;
+    private int count;
 
-    public CookingTimerTask(int[] tableLocation, Restaurant restaurant) {
+    public KitchenOrder(int[] tableLocation, Restaurant restaurant) {
         this.tableLocation = tableLocation;
         this.restaurant = restaurant;
+        count = 0;
     }
 
     public int[] getLoc() {
         return tableLocation;
     }
 
-    @Override
-    public void run() {
+    public void update() {
+        count++;
+
+        if (count % 25 == 0)
+            askForBot();
+    }
+    
+    private void askForBot() {
         ArrayList<Integer> trans = new ArrayList<Integer>();
         trans.add(tableLocation[0]);
         trans.add(tableLocation[1]);
@@ -25,23 +31,19 @@ class CookingTimerTask extends TimerTask  {
     }
 }
 
-class OrderWrapper {
-    public Timer timer;
-    public CookingTimerTask task;
-
-    public OrderWrapper(Timer timer, CookingTimerTask task) {
-        this.timer = timer;
-        this.task = task;
-    }
-}
-
 public class Kitchen {
     private Restaurant restaurant;
-    ArrayList<OrderWrapper> orders;
+    ArrayList<KitchenOrder> orders;
     
     public Kitchen(Restaurant restaurant) {
         this.restaurant = restaurant;
-        orders = new ArrayList<OrderWrapper>();
+        orders = new ArrayList<KitchenOrder>();
+    }
+
+    public void update() {
+        for (KitchenOrder order: orders) {
+            order.update();
+        }
     }
 
     public void radioReception(RadioData dat) {
@@ -49,20 +51,14 @@ public class Kitchen {
 
         switch (cmdId) {
             case 2:     // Une commande est reçue
-                Timer timer = new Timer();
-                CookingTimerTask torder = new CookingTimerTask(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)}, restaurant);
-                timer.schedule(torder, restaurant.getTimeStep() * 20, restaurant.getTimeStep() * 10);
-                orders.add(new OrderWrapper(timer, torder));
+                orders.add(new KitchenOrder(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)}, restaurant));
                 break;
 
             case 5:
-                OrderWrapper toRemove = null;
-                for (OrderWrapper order: orders) {
-                    if (Arrays.equals(order.task.getLoc(), new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)})) {
-                        order.timer.cancel();
-                        order.timer.purge();
+                KitchenOrder toRemove = null;
+                for (KitchenOrder order: orders) {
+                    if (Arrays.equals(order.getLoc(), new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)}))
                         toRemove = order;
-                    }
                 }
                 orders.remove(toRemove);
                 break;

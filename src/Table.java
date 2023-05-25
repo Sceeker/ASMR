@@ -1,12 +1,12 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 
 enum TableState {
+    free(2),
+    customerArriving(2),
     waitingToOrder(8),
     waitingForOrder(9),
     occupied(7);
@@ -23,16 +23,18 @@ enum TableState {
 }
 
 public class Table {
-    private boolean taken;
+    private TableState state;
     private int[] coords;
     private Restaurant restaurant;
+    private int count;
     private boolean waiterAssigned;
+    private RadioData tmpDat;
 
     public Table(int[] coords, Restaurant restaurant) {
-        taken = false;
+        state = TableState.free;
         this.coords = coords;
         this.restaurant = restaurant;
-        waiterAssigned = false;
+        count = 0;
 
         Collections.shuffle(restaurant.getTables());
     }
@@ -66,21 +68,9 @@ public class Table {
     }
 
     public int[] takeTable(int[] orig) {
-        taken = true;
+        changeTableState(TableState.customerArriving);
 
         return findAccessor(orig);
-    }
-
-    private void scheduleLeaving() {
-        TimerTask task = new TimerTask() {
-            public void run() {
-                leave();
-            }
-        };
-
-        Timer timer = new Timer();
-        
-        timer.schedule(task, restaurant.getTimeStep() * 30);
     }
 
     public void radioReception(RadioData dat) {
@@ -92,51 +82,41 @@ public class Table {
         }
     }
 
-    private void askForWaiter(RadioData dat) {
+    private void askForWaiter() {
         if (waiterAssigned)
             return;
 
-        restaurant.getAir().radioTransmission(dat);
-
-        TimerTask task = new TimerTask() {
-            public void run() {
-                askForWaiter(dat);
-            }
-        };
-
-        Timer timer = new Timer();
-        
-        timer.schedule(task, restaurant.getTimeStep() * 20);
+        restaurant.getAir().radioTransmission(tmpDat);
     }
 
     public void sit(RadioData dat) {
+        changeTableState(TableState.waitingToOrder);
         waiterAssigned = false;
-
-        askForWaiter(dat);
+        tmpDat = dat;
     }
 
     private void leave() {
         int[] leavingPos = findAccessor(coords);
 
-        if (leavingPos == null) {
-            scheduleLeaving();
+        if (leavingPos == null)
             return;
-        }
 
         restaurant.getCustomers().add(new Customer(leavingPos, restaurant, true));
         restaurant.getEnv().addComponent(leavingPos, 5, restaurant.typeColor(5));
 
         ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(coords[0], coords[1], 2, restaurant.typeColor(2));
         restaurant.getEnv().moveComponent(coords, coords, 2);
+
+        changeTableState(TableState.free);
+        tmpDat = null;
     }
 
     public void changeTableState(TableState step) {
+        state = step;
+        count = 0;
+
         ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(coords[0], coords[1], step.getValue(), restaurant.typeColor(step.getValue()));
         restaurant.getEnv().moveComponent(coords, coords, step.getValue());
-
-        if (step == TableState.occupied) {
-            scheduleLeaving();
-        }
     }
 
     public int[] getCoords() {
@@ -144,6 +124,16 @@ public class Table {
     }
 
     public boolean isTaken() {
-        return taken;
+        return (state != TableState.free);
+    }
+
+    public void update() {
+        count++;
+    
+        if (state == TableState.waitingToOrder && ! waiterAssigned && count % 10 == 0)
+            askForWaiter();
+    
+        if (state == TableState.occupied && count % 50 == 0)
+            leave();
     }
 }

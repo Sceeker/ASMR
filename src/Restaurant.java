@@ -205,7 +205,7 @@ public class Restaurant extends SimFactory {
 
     @Override
     public void schedule() {
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10000; i++) {
             if (! customers.isEmpty()) {
                 ArrayList<Customer> toRemove = new ArrayList<Customer>();
                 for (Customer customer: customers) {
@@ -227,7 +227,13 @@ public class Restaurant extends SimFactory {
             for (GridTurtlebot bot: bots) {
                 bot.move(0);
             }
-    
+
+            for (Table table : tables) {
+                table.update();
+            }
+
+            kitchen.update();
+
             System.out.println("Step " + i);
             try {
                 TimeUnit.MILLISECONDS.sleep(timeStep);

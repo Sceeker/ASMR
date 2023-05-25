@@ -3,7 +3,6 @@ import java.util.Arrays;
 import java.util.Random;
 
 import fr.emse.fayol.maqit.simulator.components.Orientation;
-import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 
 enum INSState {
@@ -14,14 +13,14 @@ enum INSState {
 }
 
 public class INS extends GridTurtlebot {
-    private Restaurant restaurant;
-    private int[] orderOnHold;
-    private GridPath curPath;
-    private int pathStep;
-    private boolean follow;
-    private INSState state;
-    private boolean recompute;
-    private ArrayList<Integer> dists;
+    protected Restaurant restaurant;
+    protected int[] orderOnHold;
+    protected GridPath curPath;
+    protected int pathStep;
+    protected boolean follow;
+    protected INSState state;
+    protected boolean recompute;
+    protected ArrayList<Integer> dists;
 
     public INS(int id, String name, int field, int debug, int[] pos, int r, int c, Restaurant restaurant) {
         super(id, name, field, debug, pos, r, c);
@@ -34,7 +33,7 @@ public class INS extends GridTurtlebot {
         dists = new ArrayList<Integer>();
     }
 
-    private void manageOrder() {
+    protected void manageOrder() {
         if (state != INSState.waiting) {
             follow = true;
             dists.clear();
@@ -46,7 +45,7 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    private void cancelOrder() {
+    protected void cancelOrder() {
         if (state != INSState.waiting) {
             state = INSState.waiting;
             follow = false;
@@ -65,7 +64,7 @@ public class INS extends GridTurtlebot {
         return null;
     }
 
-    private void transmitDistance() {
+    protected void transmitDistance() {
         if (state != INSState.waiting) {
             ArrayList<Integer> trans = new ArrayList<Integer>();
             trans.add(curPath.getDistance());
@@ -80,7 +79,7 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    private void comparateurDeDistanceSuperSympa() {
+    protected void comparateurDeDistanceSuperSympa() {
         if (curPath == null)
             return;
 
@@ -177,7 +176,7 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    private void computePath(int[] dest) {
+    protected void computePath(int[] dest) {
         PathFinding solver = new PathFinding(restaurant);
 
         ArrayList<Integer> trans = new ArrayList<Integer>();
@@ -277,9 +276,10 @@ public class INS extends GridTurtlebot {
         if (restaurant.getEnv().getEnvironment().getCellContent(next[0], next[1]) == 0) {  
             setLocation(next);
 
-
-                ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(next[0], next[1], 6, restaurant.typeColor(6));
-                ((ColorGridEnvironment) restaurant.getEnv().getEnvironment()).changeCell(cur[0], cur[1], 0, restaurant.typeColor(0));
+            // pas foufou il faudrait réutiliser les moveLeft, moveRight etc... mais ils semblent buggés (cf historique des commits) surtout visuellement
+            // parfois les bots se déplacenet (pos change bien) mais pas leur case
+            restaurant.getEnv().moveComponent(cur, next, 6);
+            restaurant.getEnv().addComponent(cur, 0, restaurant.typeColor(0));
         } else {
             Random rng = new Random();
             if (rng.nextBoolean())
