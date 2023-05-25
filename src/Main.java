@@ -34,7 +34,7 @@ public class Main {
         }
 
         // Permet de faire tourner beaucoup de simulation à grande cadence afin de moyenner les résultats et avoir quelque chose de plus potable
-        boolean multipleRuns = true;        // ATTENTION, à cause de comment est fait la biblio TurtleBot, cela empêche la visualisation graphique de la simulation. Pour voir, mettre à false
+        boolean multipleRuns = false;        // ATTENTION, à cause de comment est fait la biblio TurtleBot, cela empêche la visualisation graphique de la simulation. Pour voir, mettre à false
 
         Path path = Paths.get("restaurant.txt");
         List<String> file = Files.readAllLines(path);
