@@ -1,3 +1,4 @@
+import fr.emse.fayol.maqit.simulator.environment.ColorGridEnvironment;
 import fr.emse.fayol.maqit.simulator.environment.GridEnvironment;
 import fr.emse.fayol.maqit.simulator.environment.GridManagement;
 
@@ -13,5 +14,17 @@ public class OpenGridManagement extends GridManagement {
 
     public GridEnvironment getEnvironment() {
         return this.env;
+    }
+
+    public void clearEnv() {
+        if (env.getClass() == ColorGridEnvironment.class) {
+            env = new ColorGridEnvironment(rows, columns);
+        } else {
+            env = new GridEnvironment(rows, columns);
+        }
+    }
+
+    public int debugLevel() {
+        return debug;
     }
 }

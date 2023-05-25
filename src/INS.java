@@ -93,7 +93,7 @@ public class INS extends GridTurtlebot {
         manageOrder();
     }
 
-    protected boolean thirdPartyCheck() {
+    protected boolean thirdPartyCheck(int[] test) {
         return true;
     }
 
@@ -102,7 +102,7 @@ public class INS extends GridTurtlebot {
 
         switch (cmdId) {
             case 0:     // Une table veut commander
-                if (state == INSState.waiting && thirdPartyCheck()) {
+                if (state == INSState.waiting && thirdPartyCheck(new int[] {dat.getCommandData().get(2), dat.getCommandData().get(3)})) {
                     orderOnHold = new int[] {dat.getCommandData().get(2), dat.getCommandData().get(3)};
                     state = INSState.taking;
 
@@ -129,7 +129,7 @@ public class INS extends GridTurtlebot {
                 break;
 
             case 3:     // Une commande est prête
-                if (state == INSState.waiting && thirdPartyCheck()) {
+                if (state == INSState.waiting && thirdPartyCheck(new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)})) {
                     orderOnHold = new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)};
                     state = INSState.picking;
 
@@ -187,7 +187,7 @@ public class INS extends GridTurtlebot {
         if (solver.freeNeighboringCoords(getLocation()).isEmpty()) {
             trans.add(getLocation()[0]);
             trans.add(getLocation()[1]);
-        } else if (solver.freeNeighboringCoords(dest).isEmpty() || restaurant.getEnv().getEnvironment().getCellContent(dest[0], dest[1]) != 0) {
+        } else if (solver.freeNeighboringCoords(dest).isEmpty() || (restaurant.getEnv().getEnvironment().getCellContent(dest[0], dest[1]) != 0 && getLocation() != dest)) {
             trans.add(dest[0]);
             trans.add(dest[1]);
         }

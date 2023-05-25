@@ -8,19 +8,23 @@ import fr.emse.fayol.maqit.simulator.configuration.SimProperties;
 import fr.emse.fayol.maqit.simulator.robot.GridTurtlebot;
 
 public class Restaurant extends SimFactory {
-    private Airwaves air;
     private List<String> file;
     private int height, width;
     private int timeStep;
+    private int nbSteps;
+    
+    private Airwaves air;
     private Kitchen kitchen;
     private ArrayList<Customer> customers;
     private ArrayList<Table> tables;
     private ArrayList<INS> bots;
     private ArrayList<int[]> collectPoints;
     private ArrayList<int[]> doors;
+    private ArrayList<int[]> botZones;
 
     private int indicator;
     private int cumCustomer;
+    private boolean err;
 
     public int[] typeColor(int x) {
         int[] col;
@@ -75,23 +79,26 @@ public class Restaurant extends SimFactory {
         return col;
     }
 
-    public Restaurant(SimProperties sp, OpenGridManagement env, List<String> file, int timeStep) {
-        super(sp, env);     
+    public Restaurant(SimProperties sp, OpenGridManagement env, List<String> file, int timeStep, int nbSteps) {
+        super(sp, env);
 
         this.file = file;
         this.timeStep = timeStep;
+        this.nbSteps = nbSteps;
 
         customers = new ArrayList<Customer>();
         tables = new ArrayList<Table>();
         air = new Airwaves(this);
         bots = new ArrayList<INS>();
         kitchen = new Kitchen(this);
+        botZones = new ArrayList<int[]>();
 
         indicator = 0;
         cumCustomer = 0;
+        err = false;
 
-        createTurtlebot();
         createObstacle();
+        createTurtlebot();   
     }
 
     public int getHeight() {
@@ -138,6 +145,10 @@ public class Restaurant extends SimFactory {
         return timeStep;
     }
 
+    public boolean getError() {
+        return err;
+    }
+
     private ArrayList<int[]> createAccessors(ArrayList<int[]> lst) {
         ArrayList<int[]> res = new ArrayList<int[]>();
 
@@ -160,6 +171,37 @@ public class Restaurant extends SimFactory {
 
             for (int x = 0; x < environment.getColumns(); x++) {
                 char ch = cur[x];
+
+                if (96 < ch && ch < 123) {
+                    ch -= 97;
+
+                    boolean alreadyExisting = false;
+
+                    for (int[] botZone: botZones) {
+                        if (botZone[0] == ch) {
+                            if (y < botZone[1] || x < botZone[2]) {
+                                botZone[1] = y;
+                                botZone[2] = x;
+                                botZone[3] = botZone[1];
+                                botZone[4] = botZone[2];
+                            } else {
+                                botZone[3] = y;
+                                botZone[4] = x;
+                            }
+
+                            alreadyExisting = true;
+                            break;
+                        }
+                    }
+
+                    if (! alreadyExisting) {
+                        int[] zone = new int[] {ch, y, x, 0, 0};
+                        botZones.add(zone);
+                    }
+
+                    ch = 49;
+                }
+
                 int val = ch - 48;
 
                 if (val != 6) {
@@ -186,6 +228,19 @@ public class Restaurant extends SimFactory {
         createObstacle();
     }
 
+    private boolean inBoundary(int[] zone, int r, int c) {
+        int relR = r - zone[1];
+        int relC = c - zone[2];
+
+        if (relR < 0 || relC < 0)
+            return false;
+
+        if (r > zone[3] || c > zone[4])
+            return false;
+
+        return true;
+    }
+
     @Override
     public void createTurtlebot() {
         for (int y = 0; y < this.environment.getRows(); y++) {
@@ -196,9 +251,18 @@ public class Restaurant extends SimFactory {
                 int val = ch - 48;
 
                 if (val == 6) {
+                    if (! botZones.isEmpty()) {
+                        for (int[] botZone: botZones) {
+                            if (inBoundary(botZone, y, x)) {
+                                bots.add(new RestrictedINS(0, "INS " + String.valueOf(0), 2, 0, new int[] {y, x}, height, width, this, new int[] {botZone[1], botZone[2]}, new int[] {botZone[3], botZone[4]}));
+                                break;
+                            }
+                        }
+                    } else {
+                        bots.add(new INS(0, "INS " + String.valueOf(0), 2, 0, new int[] {y, x}, height, width, this));
+                    }
+
                     this.environment.addComponent(new int[] {y, x}, val, typeColor(val));
-                    
-                    bots.add(new INS(0, "INS " + String.valueOf(0), 2, 0, new int[] {y, x}, height, width, this));
                 }
             }
         }
@@ -211,7 +275,7 @@ public class Restaurant extends SimFactory {
 
     @Override
     public void schedule() {
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < nbSteps; i++) {
             if (! customers.isEmpty()) {
                 ArrayList<Customer> toRemove = new ArrayList<Customer>();
                 for (Customer customer: customers) {
@@ -245,20 +309,23 @@ public class Restaurant extends SimFactory {
 
             kitchen.update();
 
-            System.out.println("Step " + i);
+            if (((OpenGridManagement) environment).debugLevel() > 0)
+                System.out.println("Step " + i);
             try {
                 TimeUnit.MILLISECONDS.sleep(timeStep);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }
+    }
 
-        System.out.println("===========================");
-        System.out.println("====SIMULATION TERMINEE====");
-        String tmp = "====INDICATEUR: " + indicator / cumCustomer;
-        tmp += new String(new char[27 - tmp.length()]).replace("\0", "=");
-        System.out.println(tmp);
-        System.out.println("===========================");
-        System.exit(0);
+    public void threadError() {
+        err = true;
+    }
+
+    public int run() {
+        schedule();
+
+        return indicator / cumCustomer;
     }
 }

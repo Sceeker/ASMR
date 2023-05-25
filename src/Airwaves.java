@@ -13,7 +13,11 @@ public class Airwaves {
                 Executors.newSingleThreadExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        bot.radioReception(dat);
+                        try {
+                            bot.radioReception(dat);
+                        } catch (Exception e) {
+                            restaurant.threadError();
+                        }
                     }});
         }
 
@@ -23,6 +27,7 @@ public class Airwaves {
 
         restaurant.getKitchen().radioReception(dat);
 
-        System.out.println("[RADIO] Command " + dat.getCommandId());
+        if (((OpenGridManagement) restaurant.getEnv()).debugLevel() > 0)
+                System.out.println("[RADIO] Command " + dat.getCommandId());
     }
 }

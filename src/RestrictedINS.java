@@ -9,21 +9,17 @@ public class RestrictedINS extends INS {
         this.boundaryTL = boudaryTL;
     }
 
-    private boolean inBoundary(int[] coords) {
-        int relR = coords[0] - boundaryTL[0];
-        int relC = coords[1] - boundaryTL[1];
+    @Override
+    protected boolean thirdPartyCheck(int[] test) {
+        int relR = test[0] - boundaryTL[0];
+        int relC = test[1] - boundaryTL[1];
 
         if (relR < 0 || relC < 0)
             return false;
 
-        if (relR > boundaryBR[0] || relC > boundaryBR[1])
+        if (test[0] > boundaryBR[0] || test[1] > boundaryBR[1])
             return false;
 
         return true;
-    }
-
-    @Override
-    protected boolean thirdPartyCheck() {
-        return inBoundary(orderOnHold);
     }
 }
