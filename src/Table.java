@@ -127,6 +127,10 @@ public class Table {
         return (state != TableState.free);
     }
 
+    public TableState getTableState() {
+        return state;
+    }
+
     public void update() {
         count++;
     

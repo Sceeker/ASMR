@@ -19,6 +19,9 @@ public class Restaurant extends SimFactory {
     private ArrayList<int[]> collectPoints;
     private ArrayList<int[]> doors;
 
+    private int indicator;
+    private int cumCustomer;
+
     public int[] typeColor(int x) {
         int[] col;
 
@@ -83,6 +86,9 @@ public class Restaurant extends SimFactory {
         air = new Airwaves(this);
         bots = new ArrayList<INS>();
         kitchen = new Kitchen(this);
+
+        indicator = 0;
+        cumCustomer = 0;
 
         createTurtlebot();
         createObstacle();
@@ -205,7 +211,7 @@ public class Restaurant extends SimFactory {
 
     @Override
     public void schedule() {
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 1000; i++) {
             if (! customers.isEmpty()) {
                 ArrayList<Customer> toRemove = new ArrayList<Customer>();
                 for (Customer customer: customers) {
@@ -222,6 +228,8 @@ public class Restaurant extends SimFactory {
                 int[] entry = doors.get(rng.nextInt(doors.size()));
                 customers.add(new Customer(entry, this));
                 environment.addComponent(entry, 5, typeColor(5));
+
+                cumCustomer++;
             }
 
             for (GridTurtlebot bot: bots) {
@@ -230,6 +238,9 @@ public class Restaurant extends SimFactory {
 
             for (Table table : tables) {
                 table.update();
+
+                if (table.getTableState() == TableState.waitingToOrder || table.getTableState() == TableState.waitingForOrder)
+                    indicator++;
             }
 
             kitchen.update();
@@ -241,5 +252,13 @@ public class Restaurant extends SimFactory {
                 e.printStackTrace();
             }
         }
+
+        System.out.println("===========================");
+        System.out.println("====SIMULATION TERMINEE====");
+        String tmp = "====INDICATEUR: " + indicator / cumCustomer;
+        tmp += new String(new char[27 - tmp.length()]).replace("\0", "=");
+        System.out.println(tmp);
+        System.out.println("===========================");
+        System.exit(0);
     }
 }

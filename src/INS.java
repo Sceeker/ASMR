@@ -33,7 +33,7 @@ public class INS extends GridTurtlebot {
         dists = new ArrayList<Integer>();
     }
 
-    protected void manageOrder() {
+    private void manageOrder() {
         if (state != INSState.waiting) {
             follow = true;
             dists.clear();
@@ -45,7 +45,7 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    protected void cancelOrder() {
+    private void cancelOrder() {
         if (state != INSState.waiting) {
             state = INSState.waiting;
             follow = false;
@@ -64,7 +64,7 @@ public class INS extends GridTurtlebot {
         return null;
     }
 
-    protected void transmitDistance() {
+    private void transmitDistance() {
         if (state != INSState.waiting) {
             ArrayList<Integer> trans = new ArrayList<Integer>();
             trans.add(curPath.getDistance());
@@ -79,7 +79,7 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    protected void comparateurDeDistanceSuperSympa() {
+    private void comparateurDeDistanceSuperSympa() {
         if (curPath == null)
             return;
 
@@ -93,12 +93,16 @@ public class INS extends GridTurtlebot {
         manageOrder();
     }
 
+    protected boolean thirdPartyCheck() {
+        return true;
+    }
+
     public void radioReception(RadioData dat) {
         int cmdId = dat.getCommandId();
 
         switch (cmdId) {
             case 0:     // Une table veut commander
-                if (state == INSState.waiting) {
+                if (state == INSState.waiting && thirdPartyCheck()) {
                     orderOnHold = new int[] {dat.getCommandData().get(2), dat.getCommandData().get(3)};
                     state = INSState.taking;
 
@@ -125,7 +129,7 @@ public class INS extends GridTurtlebot {
                 break;
 
             case 3:     // Une commande est prête
-                if (state == INSState.waiting) {
+                if (state == INSState.waiting && thirdPartyCheck()) {
                     orderOnHold = new int[] {dat.getCommandData().get(0), dat.getCommandData().get(1)};
                     state = INSState.picking;
 
@@ -176,7 +180,7 @@ public class INS extends GridTurtlebot {
         }
     }
 
-    protected void computePath(int[] dest) {
+    private void computePath(int[] dest) {
         PathFinding solver = new PathFinding(restaurant);
 
         ArrayList<Integer> trans = new ArrayList<Integer>();
