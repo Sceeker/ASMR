@@ -45,7 +45,7 @@ public class Main {
         Random rng = new Random();
 
         if (multipleRuns) {
-            int nbRuns = 32;        // Pour changer le nombre de simulations à faire
+            int nbRuns = 10;        // Pour changer le nombre de simulations à faire
 
             OpenGridManagement env = new OpenGridManagement(rng.nextInt(), height, width, sp.display_title, sp.display_x, sp.display_y, height * 32,  width * 32, 0);
             int avg = 0;
@@ -69,7 +69,7 @@ public class Main {
                     avg = 0;
                 }
                 
-                Restaurant asmr = new Restaurant(sp, env, file, 10, 1500);
+                Restaurant asmr = new Restaurant(sp, env, file, 10, 1000);
 
                 try {
                     cur = asmr.run();
