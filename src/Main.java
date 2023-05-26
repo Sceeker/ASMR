@@ -34,7 +34,7 @@ public class Main {
         }
 
         // Permet de faire tourner beaucoup de simulation à grande cadence afin de moyenner les résultats et avoir quelque chose de plus potable
-        boolean multipleRuns = false;        // ATTENTION, à cause de comment est fait la biblio TurtleBot, cela empêche la visualisation graphique de la simulation. Pour voir, mettre à false
+        boolean multipleRuns = true;        // ATTENTION, à cause de comment est fait la biblio TurtleBot, cela empêche la visualisation graphique de la simulation. Pour voir, mettre à false
 
         Path path = Paths.get("restaurant.txt");
         List<String> file = Files.readAllLines(path);
@@ -45,7 +45,7 @@ public class Main {
         Random rng = new Random();
 
         if (multipleRuns) {
-            int nbRuns = 10;        // Pour changer le nombre de simulations à faire
+            int nbRuns = 100;        // Pour changer le nombre de simulations à faire
 
             OpenGridManagement env = new OpenGridManagement(rng.nextInt(), height, width, sp.display_title, sp.display_x, sp.display_y, height * 32,  width * 32, 0);
             int avg = 0;
@@ -69,7 +69,7 @@ public class Main {
                     avg = 0;
                 }
                 
-                Restaurant asmr = new Restaurant(sp, env, file, 10, 1000);
+                Restaurant asmr = new Restaurant(sp, env, file, 10, 400);
 
                 try {
                     cur = asmr.run();
@@ -97,7 +97,7 @@ public class Main {
             {
                 OpenGridManagement env = new OpenGridManagement(rng.nextInt(), height, width, sp.display_title, sp.display_x, sp.display_y, height * 32,  width * 32, 0);
 
-                Restaurant asmr = new Restaurant(sp, env, file, 100, 1000);
+                Restaurant asmr = new Restaurant(sp, env, file, 10, 1500);
 
                 System.out.println("Nombre de pas moyen d'attente en mode dynamique: " + asmr.run());
             }
@@ -111,7 +111,7 @@ public class Main {
             {
                 OpenGridManagement env = new OpenGridManagement(rng.nextInt(), height, width, sp.display_title, sp.display_x, sp.display_y, height * 32,  width * 32, 0);
 
-                Restaurant asmr = new Restaurant(sp, env, file, 100, 1000);
+                Restaurant asmr = new Restaurant(sp, env, file, 10, 1500);
 
                 System.out.println("Nombre de pas moyen d'attente en mode zones: " + asmr.run());
             }
